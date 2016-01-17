@@ -8,9 +8,6 @@
 	       :read-only t)
   (timestamp (get-internal-real-time) :type fixnum :read-only t))
 
-(defmethod timestamp ((defstruct-plus-methods::object skitter-event))
-  (skitter-event-timestamp defstruct-plus-methods::object))
-
 ;;----------------------------------------------------------------------
 ;; meta events
 
@@ -147,7 +144,12 @@
    should not be neccesary as event nodes can carry any kind of event.
    See #'make-event-node to make sure that you definitely need to use
    def-event-node-type"
-  (labels ((flatten (x &optional acc)
+  (labels ((mkstr (&rest args)
+	     (with-output-to-string (s)
+	       (dolist (a args) (princ a s))))
+	   (symb-package (package &rest args)
+	     (values (intern (apply #'mkstr args) package)))
+	   (flatten (x &optional acc)
              (cond ((null x) acc)
                    ((atom x) (cons x acc))
                    (t (flatten (car x)

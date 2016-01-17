@@ -8,4 +8,5 @@
   :depends-on (#:trivial-garbage)
   :components ((:file "package")
 	       (:file "base-types")
+	       (:file "event-nodes")
                (:file "named-event-nodes")))
