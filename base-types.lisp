@@ -156,26 +156,28 @@
                            (flatten (cdr x) acc)))))
 	   (kwd (&rest args)
 	     (intern (apply #'mkstr args) "KEYWORD")))
-
-    (let ((%make-name (symb-package (symbol-package name) '%make- name))
-	  (make-name (symb-package (symbol-package name) 'make- name))
-	  (slot-names (mapcar #'first slots)))
-      `(progn
-	 (defstruct (,name (:include skitter::skitter-event-node)
-			   (:constructor ,%make-name))
-	   ,@slots)
-	 (defun ,make-name (&key (name +default-node-name+) tags (filter #'event-no-filter)
-			      (body #'event-no-body) subscribe-to
-			      ,@slot-names)
-	   (%make-node-asserts filter body subscribe-to)
-	   (%make-node-post-proc
-	    (,%make-name
-	     :name name
-	     :tags (if (listp tags) tags (list tags))
-	     :filter filter
-	     :body body
-	     ,@(flatten (mapcar #'(lambda (x) (list (kwd x) x)) slot-names)))
-	    subscribe-to))))))
+    (destructuring-bind (name &key constructor) (if (listp name)
+						    name (list name))
+      (let ((constructor (or constructor
+			     (symb-package (symbol-package name) 'make- name)))
+	    (%make-name (gensym (format nil "%MAKE-~S" name)))
+	    (slot-names (mapcar #'first slots)))
+	`(progn
+	   (defstruct (,name (:include skitter::skitter-event-node)
+			     (:constructor ,%make-name))
+	     ,@slots)
+	   (defun ,constructor (&key (name +default-node-name+) tags (filter #'event-no-filter)
+				  (body #'event-no-body) subscribe-to
+				  ,@slot-names)
+	     (%make-node-asserts filter body subscribe-to)
+	     (%make-node-post-proc
+	      (,%make-name
+	       :name name
+	       :tags (if (listp tags) tags (list tags))
+	       :filter filter
+	       :body body
+	       ,@(flatten (mapcar #'(lambda (x) (list (kwd x) x)) slot-names)))
+	      subscribe-to)))))))
 
 (defun subscribe (node source-node &key (weak t))
   (assert (typep node 'skitter-event-node))
