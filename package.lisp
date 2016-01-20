@@ -12,5 +12,11 @@
 	   :skitter-event-source-node
 	   :skitter-event-timestamp
 
+	   :event-node-uid
+	   :event-node-name
+	   :event-node-tags
+	   :event-node-filter
+	   :event-node-body
+
 	   :all-events
 	   :event-system-meta-node))
