@@ -1,5 +1,8 @@
 ;;;; package.lisp
 
 (defpackage #:skitter
-  (:use #:cl)
+  (:use #:cl #:structy-defclass)
   (:export ))
+
+(defpackage #:skitter-hidden
+  (:use #:cl))

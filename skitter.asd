@@ -5,10 +5,7 @@
     :author "Chris Bagley Baggers <techsnuffle@gmail.com>"
     :license "BSD 2 Clause"
     :serial t
+    :depends-on (:structy-defclass :grab-bag :rtg-math)
     :components ((:file "package")
-		 ))
-
-;; :depends-on (#:trivial-garbage)
-;; (:file "base-types")
-;; (:file "event-nodes")
-;; (:file "named-event-nodes")
+		 (:file "hidden")
+		 (:file "core")))
