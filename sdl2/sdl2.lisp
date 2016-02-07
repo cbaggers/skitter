@@ -25,14 +25,16 @@
      (loop :until (= 0  (sdl2:next-event ,event ,method ,timeout)) :do
         (case (sdl2::get-event-type ,event)
           ,@(loop :for (type params . forms) :in event-handlers
-               :append (let ((type (listify type)))
+               :append (let ((type (if (listp type)
+				       type
+				       (list type))))
                          (loop :for typ :in type :collect
                             (sdl2::expand-handler event typ params forms)))
                :into results
                :finally (return (remove nil results)))))
      (sdl2:free-event ,event)))
 
-(defun collect-sdl-events ()
+(defun old-collect-sdl-events ()
   (let ((results nil))
     (%case-events (event)
       (:quit (:timestamp ts)
@@ -49,48 +51,54 @@
                         :data (list x y))
                        results)))
 
-      (:mousewheel (:timestamp ts :which id :x x :y y)
-                   (cl:push
-                    (evt:make-mouse-scroll
-                     :timestamp (sdl->lisp-time ts)
-                     :mouse-id id
-                     :vec (cl-game-math.base-vectors:v! x y))
-                    results))
-
-      ((:mousebuttondown :mousebuttonup)
-       (:timestamp ts :which id :button b :state s
-                   :clicks c :x x :y y)
-       (cl:push (evt:make-mouse-button
-                 :timestamp (sdl->lisp-time ts)
-                 :mouse-id id
-                 :button (mouse-button-lookup b)
-                 :state (mouse-button-state-lookup s)
-                 :clicks c
-                 :pos (cl-game-math.base-vectors:v! x y))
-                results))
-
-      (:mousemotion
-       (:timestamp ts :which id :state s :x x :y y
-                   :xrel xrel :yrel yrel)
-       (cl:push (evt:make-mouse-motion
-                 :timestamp (sdl->lisp-time ts)
-                 :mouse-id id
-                 :state (mouse-button-state-lookup s)
-                 :pos (cl-game-math.base-vectors:v! x y)
-                 :delta (cl-game-math.base-vectors:v! xrel yrel))
-                results))
-
-      ((:keydown :keyup)
-       (:type typ :timestamp ts :state s :repeat r :keysym keysym)
-       (cl:push (evt:make-key-event
-                 :timestamp (sdl->lisp-time ts)
-                 :etype (key-type-lookup typ)
-                 :state (key-state-lookup s)
-                 :repeating (= r 0)
-                 :key (sdl-scancode-lookup
-                       (plus-c:c-ref keysym sdl2-ffi:sdl-keysym :scancode)))
-                results)))
+      )
     (reverse results)))
+
+(defun collect-sdl-events ()
+  (%case-events (event)
+    (:mousewheel
+     (:timestamp ts :which id :x x :y y)
+     (let ((mouse (mouse id)))
+       (apply-xy-wheel (mouse-wheel mouse 0)
+		       (sdl->lisp-time ts)
+		       :vec (v! x y))))
+
+    ((:mousebuttondown :mousebuttonup)
+     (:timestamp ts :which id :button b :state s :x x :y y)
+     ;; what should we do with clicks? (:clicks c)
+     (let ((mouse (mouse id)))
+       (apply-button (mouse-button mouse b)
+		     (sdl->lisp-time ts)
+		     :down-p (= 1 s))
+       (apply-xy-pos (mouse-pos mouse)
+		     (sdl->lisp-time ts)
+		     :vec (v! x y))))
+
+    (:mousemotion
+     (:timestamp ts :which id :x x :y y :xrel xrel :yrel yrel)
+     ;; what should we do with state? (:state s)
+     (let ((mouse (mouse id)))
+       (apply-xy-pos (mouse-pos mouse)
+		     (sdl->lisp-time ts)
+		     :vec (v! x y)
+		     :relative (v! xrel yrel))))
+
+    ((:keydown :keyup)
+     (:type typ :timestamp ts :state s :keysym keysym)
+     ;; what should we do with repeat (:repeat r)
+     (let ((kbd (keyboard id)))
+       (apply-button (keyboard-button kbd ???????)
+		     (sdl->lisp-time ts)
+		     :down-p (= 1 s)))
+
+     (cl:push (evt:make-key-event
+	       :timestamp (sdl->lisp-time ts)
+	       :etype (key-type-lookup typ)
+	       :state (key-state-lookup s)
+	       :repeating (= r 0)
+	       :key (sdl-scancode-lookup
+		     (plus-c:c-ref keysym sdl2-ffi:sdl-keysym :scancode)))
+	      results))))
 
 ;;--------------------------------------------
 ;; scancode lookup

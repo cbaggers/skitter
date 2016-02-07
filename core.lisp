@@ -37,18 +37,37 @@
 			      `(,(intern (format nil "MAKE-~a" type)
 					 (symbol-package type))))))
 	       `(,name ,init :type ,type))))
-    (let* ((slot-names (mapcar #'first slots))
+    (let* ((original-slot-names
+	    (mapcar (lambda (x) (intern (format nil "~a-~a" name x)
+					(symbol-package name)))
+		    (mapcar #'first slots)))
+	   (hidden-slot-names (mapcar (lambda (x s) (if (third s) (hide x) x))
+				      original-slot-names
+				      slots))
+	   (hidden-slots (mapcar #'cons
+				 hidden-slot-names
+				 (mapcar #'rest slots)))
 	   (types (mapcar #'second slots))
-	   (accessor-names (mapcar (lambda (x)
-				     (intern (format nil "~a-~a" name x)
-					     (symbol-package name)))
-				   slot-names))
+	   (constructor (intern (format nil "%MAKE-~a" name)
+				(symbol-package name)))
+	   (make (intern (format nil "MAKE-~a" name)
+			 (symbol-package name)))
 	   (lengths (mapcar #'third slots)))
       (when (> (length types) (length (remove-duplicates types)))
 	(error "multiple slots found with the same type, this is no allowed in defkind"))
       `(progn
-	 (deftclass ,name
-	   ,@(mapcar #'parse-slot slots))
+	 (deftclass (,name (:constructor ,constructor)
+			   (:conc-name nil))
+	   ,@(mapcar #'parse-slot hidden-slots))
+	 (defun ,make ()
+	   (,constructor))
+	 ,@(remove nil
+		   (mapcar (lambda (x s)
+			     (when (third s)
+			       `(defun ,x (source index)
+				  (aref (,(first s) source) index))))
+			   original-slot-names
+			   hidden-slots))
 	 ,@(remove nil
 		   (mapcar (lambda (x a l)
 			     (when l
@@ -58,13 +77,8 @@
 				 `(defmethod add ((inst ,name) (source ,x))
 				    (,push source (,a inst))))))
 			   types
-			   accessor-names
+			   hidden-slot-names
 			   lengths))))))
-
-(defkind mouse
-  (pos xy-pos)
-  (button button *)
-  (wheel wheel *))
 
 ;;----------------------------------------------------------------------
 
@@ -91,17 +105,6 @@
 	      ,,@(mapcar (lambda (x y z) `(when ,y (list 'setf (list ',z src) ,x)))
 			 slot-names did-set accessor-names)
 	      ,(list 'propagate src timestamp)))))))
-
-(def-event-source button
-  (down-p nil :type boolean))
-
-(def-event-source xy-pos
-  (vec (v! 0 0) :type rtg-math.types:vec2))
-
-(def-event-source wheel
-  (val 0f0 :type single-float))
-
-;; (apply-button x ts :down-p t)
 
 ;;----------------------------------------------------------------------
 
