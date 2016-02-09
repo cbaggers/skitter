@@ -172,3 +172,16 @@
 
 
 ;;----------------------------------------------------------------------
+
+(defgeneric slow-mouse-button-by-name (name))
+
+(defgeneric slow-keyboard-key-by-name (name))
+
+(defgeneric slow-window-event-by-name (name))
+
+(defun kbd ())
+
+(kbd '(:lctrl :c) 20 :a)
+
+(defun hit (event)
+  )

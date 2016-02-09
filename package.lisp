@@ -9,7 +9,10 @@
 	   :xy-wheel :apply-xy-wheel
 	   :mouse :mouse-pos :mouse-button :mouse-wheel
 	   :keyboard :keyboard-button
-	   :+mice+ :+keyboard+))
+	   :+mice+ :+keyboard+
+	   :slow-mouse-button-by-name
+	   :slow-keyboard-key-by-name
+	   :slow-window-event-by-name))
 
 (defpackage #:skitter-hidden
   (:use #:cl))
