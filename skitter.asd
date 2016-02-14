@@ -7,5 +7,6 @@
     :serial t
     :depends-on (:structy-defclass :grab-bag :rtg-math)
     :components ((:file "package")
+		 (:file "helpers")
 		 (:file "hidden")
 		 (:file "core")))
