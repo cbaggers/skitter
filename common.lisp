@@ -28,7 +28,6 @@
   (button button *)
   (wheel xy-wheel *))
 
-
 (defkind keyboard
   (button button *))
 
