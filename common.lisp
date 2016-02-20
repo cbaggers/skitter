@@ -23,12 +23,13 @@
 ;;----------------------------------------------------------------------
 
 
-(defkind mouse
+(def-input-kind mouse
   (pos xy-pos)
   (button button *)
   (wheel xy-wheel *))
 
-(defkind keyboard
+
+(def-input-kind keyboard
   (button button *))
 
 

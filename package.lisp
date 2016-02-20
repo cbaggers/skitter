@@ -1,8 +1,8 @@
 ;;;; package.lisp
 
 (defpackage #:skitter
-  (:use #:cl #:structy-defclass #:rtg-math)
-  (:export :defkind :def-event-source :def-combo-source
+  (:use #:cl #:structy-defclass #:rtg-math #:temporal-functions)
+  (:export :def-input-kind :def-event-source :def-combo-source
            :defcombo :kbd
            :button :apply-button
            :xy-pos :apply-xy-pos

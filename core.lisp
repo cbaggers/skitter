@@ -34,7 +34,7 @@
 
 ;;----------------------------------------------------------------------
 
-(defmacro defkind (name &body slots)
+(defmacro def-input-kind (name &body slots)
   (labels ((parse-slot (s)
              (let* ((name (first s))
                     (array? (or (string= :* (third s))
@@ -77,7 +77,7 @@
                                                 (symbol-package n)))
                                       types)))
       (when (> (length types) (length (remove-duplicates types)))
-        (error "multiple slots found with the same type, this is no allowed in defkind"))
+        (error "multiple slots found with the same type, this is no allowed in def-input-kind"))
       `(progn
          (deftclass (,name (:constructor ,constructor)
                            (:conc-name nil))
@@ -216,10 +216,9 @@
              (propagate ,this timestamp))
            nil)))))
 
-(def-combo-source double-click (evt &source (m mouse :button))
-    ((last-down 0 :type fix))
-  1)
-
+;; (def-combo-source double-click (evt &source (m mouse :button))
+;;     ((last-down 0 :type fix))
+;;   1)
 
 ;;----------------------------------------------------------------------
 
