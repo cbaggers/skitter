@@ -9,4 +9,5 @@
     :components ((:file "package")
 		 (:file "helpers")
 		 (:file "hidden")
-		 (:file "core")))
+		 (:file "core")
+		 (:file "common")))

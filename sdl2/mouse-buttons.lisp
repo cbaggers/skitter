@@ -1,0 +1,16 @@
+(in-package skitter.sdl2.mouse-buttons)
+
+(defun mouse.button-id (name)
+  (labels ((err () (error "key.id: invalid name ~s" name)))
+    (if (keywordp name)
+	(or (position name skitter.sdl2::*mouse-button-names*) (err))
+	(err))))
+
+(defconstant mouse.left 2)
+(defconstant mouse.middle 3)
+(defconstant mouse.right 4)
+(defconstant mouse.other0 5)
+(defconstant mouse.other1 6)
+(defconstant mouse.other2 7)
+(defconstant mouse.other3 8)
+(defconstant mouse.other4 9)

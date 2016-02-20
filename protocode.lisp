@@ -74,18 +74,63 @@
 
 ;; remeber that each time an apply happens, the whole chain propagates.
 ;; So any depenmdent combo will see the event (with timestamp).
-;; So how does the combo
+;; So how does the combo..
 
-(defmacro resetting-when (condition &body body))
+;; trying again
 
-(defcombo boom (evt &source (m mouse :button) (k keyboard :button))
-  ((slots))
-  (resetting-when ("any other" k g "event or any" m-button "event")
-    (and (keyboard-button k :lctrl)
-	 (keyboard-button k :c)))
+(defcombo boom (evt &source (m mouse button) (key keyboard button)) ()
+  (or (and (print 1)
+	   (or (print (key-p 0))
+	       (key-p x))
+	   (button-down-p evt))
+      (progn (print "reset") (reset)))
 
-  (resetting-when ("expire or any other" k g "event or any" m-button "event")
-    (before 200 (keboard-button k :a)))
+  (or (and (or (key-p 0)
+	       (key-p key.rctrl))
+	   (not (button-down-p evt))
+	   (print 2))
+      (reset))
 
-  (resetting-when ("expire or any other" k g "event or any" m-button "event")
-    (before 100 (keyboard-button k 0))))
+  (or (and (before 200)
+	   (key-p key.a)
+	   (button-down-p evt))
+      (reset))
+
+  (or (and (before 200)
+	   (key-p key.a)
+	   (button-down-p evt))
+      (reset))
+
+  (or (and (before 100)
+	   (button-down-p evt))
+      (reset)))
+
+
+;; ok so now, how shall we use this?
+;; most common will be basic input, keys bound to actions
+;; need to check if a key is down
+
+(defcombo alias (evt &source (key keyboard button))
+    ((index (get-index-by-name 'keyboard 'button :a) fixnum))
+  (when ())
+  (button-down-p evt))
+;; nah
+
+(defun key-watcher (name &optional keyboard)
+  (let ((index (get-index-by-name 'keyboard :button name)))
+    (if keyboard
+	(lambda () (button-down-p (keyboard-button keyboard index)))
+	(lambda (keyboard) (button-down-p (keyboard-button keyboard index))))))
+;; nah
+
+
+(defun key-down-p (index &optional (keyboard (keyboard 0)))
+  (button-down-p (keyboard-button keyboard index)))
+
+(defun key-id (name)
+  (get-index-by-name 'keyboard :button name))
+
+;; well this is more sane
+
+;; get-index-by-name is stupid, it still ends up backend specific so just use
+;; constants

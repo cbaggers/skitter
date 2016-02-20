@@ -5,4 +5,6 @@
     :serial t
     :depends-on (:skitter :sdl2)
     :components ((:file "sdl2/package")
-		 (:file "sdl2/sdl2")))
+		 (:file "sdl2/sdl2")
+		 (:file "sdl2/keys")
+		 (:file "sdl2/mouse-buttons")))
