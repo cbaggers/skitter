@@ -19,7 +19,7 @@
 ;;----------------------------------------------------------------------
 
 (deftclass event-source
-  (container-slot :unknown-slot :type keyword)
+  (container-slot :unknown-slot :type symbol)
   (container-index -1 :type fixnum)
   (listeners (make-array 0 :element-type 'predicate-source :adjustable t
 			 :fill-pointer 0)
