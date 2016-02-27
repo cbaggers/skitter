@@ -19,15 +19,15 @@
 ;;----------------------------------------------------------------------
 
 (deftclass event-source
-  (container-kind :unknown-kind :type keyword)
+  (container-slot :unknown-slot :type keyword)
   (container-index -1 :type fixnum)
   (listeners (make-array 0 :element-type 'predicate-source :adjustable t
 			 :fill-pointer 0)
 	     :type (array predicate-source (*))))
 
-(defun %set-container (source listeners-array container-kind index)
+(defun %set-container (source listeners-array slot-name index)
   (setf (event-source-listeners source) listeners-array
-	(event-source-container-kind source) container-kind
+	(event-source-container-slot source) slot-name
 	(event-source-container-index source) index))
 
 (deftclass (predicate-source (:include event-source))
@@ -81,8 +81,6 @@
                                         (intern (format nil "MAKE-~a" n)
                                                 (symbol-package n)))
                                       types)))
-      (when (> (length types) (length (remove-duplicates types)))
-        (error "multiple slots found with the same type, this is not allowed in def-input-kind"))
       `(progn
          (deftclass (,name (:constructor ,constructor)
                            (:conc-name nil))
@@ -94,15 +92,16 @@
          (defun ,make ()
            (let ((result (,constructor)))
 	     ,@(remove nil
-		       (mapcar (lambda (h a l)
+		       (mapcar (lambda (h a l o)
 				 (when (not l)
 				   `(%set-container (,h result)
 						    (,a result)
-						    ',name
+						    ',o
 						    -1)))
 			       hidden-slot-names
 			       listener-slot-names
-			       lengths))
+			       lengths
+			       original-slot-names))
 	     (initialize-kind result)
 	     result))
 	 (defmethod initialize-kind ((obj ,name)) obj)
@@ -117,7 +116,7 @@
                            hidden-slots
                            type-constructors))
          ,@(remove nil
-                   (mapcar (lambda (x a l ls)
+                   (mapcar (lambda (x a l ls o)
                              (when l
                                (let ((push (if (numberp l)
                                                'vector-push
@@ -125,12 +124,14 @@
                                  `(defmethod add ((inst ,name) (source ,x))
 				    (let ((arr (,a inst)))
 				      (,push source arr)
-				      (%set-container source (,ls inst) ',name
-						      (position source arr)))))))
+				      (%set-container
+				       source (,ls inst) ',o
+				       (position source arr)))))))
                            types
                            hidden-slot-names
                            lengths
-			   listener-slot-names))
+			   listener-slot-names
+			   original-slot-names))
 	 (defmethod remove-listener ((listener predicate-source) (input ,name))
 	   ,@(loop :for l :in listener-slot-names :collect
 		`(shifting-remove (,l input) listener *null-listener*))
@@ -335,8 +336,8 @@
 		       (let* ((acc (intern (format nil "~a-~a" kind slot)
 					  (symbol-package kind)))
 			      (pred
-			       `(eq (event-source-container-kind ,event-var)
-				    ',kind)))
+			       `(eq (event-source-container-slot ,event-var)
+				    ',acc)))
 			 `((,name (&optional index)
 				  (if index
 				      `(,',acc ,',kind index)
