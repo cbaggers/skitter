@@ -37,6 +37,14 @@
 
 (defgeneric initialize-kind (obj))
 
+(deftclass (null-listener (:include predicate-source)))
+
+(defvar *null-listener*
+  (make-null-listener
+   :predicate (lambda (_ _1 _2)
+		(declare (ignore _ _1 _2))
+		(error "skitter bug: null listener fired"))))
+
 ;;----------------------------------------------------------------------
 
 (defmacro def-input-kind (name &body slots)
@@ -298,14 +306,6 @@
 			    (input predicate-source))
   (shifting-remove (event-source-listeners input) listener *null-listener*)
   nil)
-
-(deftclass (null-listener (:include predicate-source)))
-
-(defvar *null-listener*
-  (make-null-listener
-   :predicate (lambda (_ _1 _2)
-		(declare (ignore _ _1 _2))
-		(error "skitter bug: null listener fired"))))
 
 ;;----------------------------------------------------------------------
 
