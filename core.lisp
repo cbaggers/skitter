@@ -247,7 +247,8 @@
          (,active nil :type boolean))
        (defun ,make (&key ,@source-types)
          (let ((result (,constructor :predicate #',logic)))
-	   ,@(loop :for (name kind slot) :in sources :append
+	   ,@(loop :for (name kind slot) :in sources
+		:do (identity name) :append
 		`((assert (typep ,kind ',kind))
 		  (listen-to result ,kind ,slot)))
 	   ,@(loop :for s-type :in source-types
@@ -412,7 +413,9 @@
   (remove-listener listener (event-listener-subject listener)))
 
 (defmacro whilst-listening-to (mappings &body body)
-  (let* ((callback-vars (loop :for m :in mappings :collect (gensym)))
+  (let* ((callback-vars (loop :for m :in mappings
+			   :do (identity m)
+			   :collect (gensym)))
 	 (callback-attach-to (loop :for m :in mappings :collect
 				(remove nil m))))
     `(let (,@callback-vars)
