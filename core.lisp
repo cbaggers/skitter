@@ -34,8 +34,11 @@
   (predicate (error "Bug found in skitter: predicate-sources must always be created with predicate logic")))
 
 (defgeneric listen-to (listener input &optional slot-name))
-
+(defgeneric stop-listening (listener))
+(defgeneric remove-listener (listener input))
+(defgeneric add (inst source))
 (defgeneric initialize-kind (obj))
+
 
 (deftclass (null-listener (:include predicate-source)))
 
