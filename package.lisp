@@ -5,7 +5,7 @@
   (:export :def-input-kind :def-event-source :def-combo-source :defcombo
 	   :initialize-kind
 	   :add
-	   :listen-to :stop-listening :whilst-listening-to
+	   :make-event-listener :listen-to :stop-listening :whilst-listening-to
 	   ;;
 	   :state :make-state :state-is :apply-state
            :button :make-button :apply-button :button-down-p
