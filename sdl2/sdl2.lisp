@@ -133,14 +133,13 @@
 
 (defun collect-sdl-events ()
   (%case-events (event)
-
     (:quit
      (:timestamp ts)
      (skitter:apply-state (system-quitting +system+) (sdl->lisp-time ts) :is t))
 
     (:windowevent
      (:timestamp ts :event e :data1 x :data2 y)
-     (let ((action (position e *window-event-names*))
+     (let ((action (aref *window-event-names* e))
 	   (ts (sdl->lisp-time ts))
 	   (win (window 0)))
        (case action
