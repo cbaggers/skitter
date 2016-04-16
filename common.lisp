@@ -79,6 +79,8 @@
     (setf (aref +mice+ n) (make-mouse)))
   (aref +mice+ n))
 
+(defun reset-mouse (n) (setf (aref +mice+ n) (make-mouse)))
+
 (defun mouse-down-p (index &optional (mouse (mouse 0)))
   (button-down-p (mouse-button mouse index)))
 
