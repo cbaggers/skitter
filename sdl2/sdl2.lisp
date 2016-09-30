@@ -131,12 +131,13 @@
                :finally (return (remove nil results)))))
      (sdl2:free-event ,event)))
 
-(defun collect-sdl-events (win)
+(defun collect-sdl-events (win &optional tpref)
   (declare (ignore win))
   (%case-events (event)
     (:quit
      (:timestamp ts)
-     (skitter:apply-state (system-quitting +system+) (sdl->lisp-time ts) :is t))
+     (skitter:apply-state (system-quitting +system+) (sdl->lisp-time ts) tpref
+                          :is t))
 
     (:windowevent
      (:timestamp ts :event e :data1 x :data2 y)
@@ -144,19 +145,27 @@
 	   (ts (sdl->lisp-time ts))
 	   (win (window 0)))
        (case action
-	 (:moved (apply-pos-2d (window-pos win) ts :vec (v!int x y)))
-	 (:resized (apply-size-2d (window-size win) ts :vec (v!int x y)))
-	 (:size-changed (apply-size-2d (window-size win) ts :vec (v!int x y)))
-	 (:minimized (apply-layout (window-layout win) ts :state :minimized))
-	 (:maximized (apply-layout (window-layout win) ts :state :maximized))
-	 (:restored (apply-layout (window-layout win) ts :state :restored))
-	 (:close (apply-state (window-layout win) ts :is t)))))
+	 (:moved (apply-pos-2d (window-pos win) ts tpref
+                               :vec (v!int x y)))
+	 (:resized (apply-size-2d (window-size win) ts tpref
+                                  :vec (v!int x y)))
+	 (:size-changed (apply-size-2d (window-size win) ts tpref
+                                       :vec (v!int x y)))
+	 (:minimized (apply-layout (window-layout win) ts tpref
+                                   :state :minimized))
+	 (:maximized (apply-layout (window-layout win) ts tpref
+                                   :state :maximized))
+	 (:restored (apply-layout (window-layout win) ts tpref
+                                  :state :restored))
+	 (:close (apply-state (window-layout win) ts tpref
+                              :is t)))))
 
     (:mousewheel
      (:timestamp ts :which id :x x :y y)
      (let ((mouse (mouse id)))
        (apply-xy-wheel (mouse-wheel mouse)
 		       (sdl->lisp-time ts)
+                       tpref
 		       :vec (v! x y))))
 
     ((:mousebuttondown :mousebuttonup)
@@ -165,9 +174,11 @@
      (let ((mouse (mouse id)))
        (apply-button (mouse-button mouse b)
 		     (sdl->lisp-time ts)
+                     tpref
 		     :down-p (= 1 s))
        (apply-xy-pos (mouse-pos mouse)
 		     (sdl->lisp-time ts)
+                     tpref
 		     :vec (v! x y))))
 
     (:mousemotion
@@ -176,6 +187,7 @@
      (let ((mouse (mouse id)))
        (apply-xy-pos (mouse-pos mouse)
 		     (sdl->lisp-time ts)
+                     tpref
 		     :vec (v! x y)
 		     :relative (v! xrel yrel))))
 
@@ -186,6 +198,7 @@
        (apply-button (keyboard-button
 		      kbd (plus-c:c-ref keysym sdl2-ffi:sdl-keysym :scancode))
 		     (sdl->lisp-time ts)
+                     tpref
 		     :down-p (= 1 s))))))
 
 ;;--------------------------------------------

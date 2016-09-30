@@ -99,14 +99,15 @@
       (typecase ,event
 	,@type-handlers)))
 
-(defun collect-glop-events (win)
+(defun collect-glop-events (win &optional tpref)
   (%case-events (event)
     (glop:close-event
-     (skitter:apply-state (system-quitting +system+) (get-internal-real-time)
-			  :is t))
+     (skitter:apply-state
+      (system-quitting +system+) (get-internal-real-time) tpref
+      :is t))
 
     (glop:resize-event
-     (apply-size-2d (window-size (window 0)) (get-internal-real-time)
+     (apply-size-2d (window-size (window 0)) (get-internal-real-time) tpref
 		    :vec (v!int (glop:width event) (glop:height event))))
 
     (glop:mouse-motion-event
@@ -114,6 +115,7 @@
 	    (mouse (mouse mouse-id)))
        (apply-xy-pos (mouse-pos mouse)
 		     (get-internal-real-time)
+                     tpref
 		     :vec (v! (glop:x event) (glop:y event))
 		     :relative (v! (glop:dx event) (glop:dy event)))))
 
@@ -122,6 +124,7 @@
 	    (mouse (mouse mouse-id)))
        (apply-button (mouse-button mouse (glop:button event))
 		     (get-internal-real-time)
+                     tpref
 		     :down-p t)))
 
     (glop:button-release-event
@@ -129,6 +132,7 @@
 	    (mouse (mouse mouse-id)))
        (apply-button (mouse-button mouse (glop:button event))
 		     (get-internal-real-time)
+                     tpref
 		     :down-p nil)))
 
     (glop:key-press-event
@@ -138,6 +142,7 @@
      (let ((kbd (keyboard 0)))
        (apply-button (keyboard-button kbd (print (glop:keycode event)))
 		     (get-internal-real-time)
+                     tpref
 		     :down-p t)))
 
     (glop:key-release-event
@@ -147,6 +152,7 @@
      (let ((kbd (keyboard 0)))
        (apply-button (keyboard-button kbd (glop:keycode event))
 		     (get-internal-real-time)
+                     tpref
 		     :down-p nil)))
 
     ;; (glop:expose-event
