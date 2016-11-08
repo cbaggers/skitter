@@ -1,10 +1,12 @@
 (in-package skitter.sdl2.mouse-buttons)
 
-(defun mouse.button-id (name)
-  (labels ((err () (error "key.id: invalid name ~s" name)))
-    (if (keywordp name)
-	(or (position name skitter.sdl2::*mouse-button-names*) (err))
-	(err))))
+(defun mouse.button-id (name/event)
+  (etypecase name/event
+    (skitter:button (skitter::event-source-container-index name/event))
+    (keyword (or (position name/event skitter.sdl2::*mouse-button-names*)
+                 (error "mouse.button-id: invalid name ~s" name/event)))
+    (t (error "mouse.button-id: Must be given a keyword name or an instance of the button event.~%Recieved ~s"
+              name/event))))
 
 (defconstant mouse.left 1)
 (defconstant mouse.middle 2)

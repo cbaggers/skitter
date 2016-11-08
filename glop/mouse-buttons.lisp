@@ -1,0 +1,16 @@
+(in-package skitter.glop.mouse-buttons)
+
+(defun mouse.button-id (name)
+  (labels ((err () (error "key.id: invalid name ~s" name)))
+    (if (keywordp name)
+	(or (position name skitter.glop::*mouse-button-names*) (err))
+	(err))))
+
+(defconstant mouse.left 1)
+(defconstant mouse.middle 2)
+(defconstant mouse.right 3)
+(defconstant mouse.other0 4)
+(defconstant mouse.other1 5)
+(defconstant mouse.other2 6)
+(defconstant mouse.other3 7)
+(defconstant mouse.other4 8)

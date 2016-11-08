@@ -183,7 +183,7 @@
                                            (symbol-package name)))
                                  slot-names))
          (did-set (mapcar #'gensym (mapcar #'symbol-name slot-names)))
-         (apply-args `(source timestamp
+         (apply-args `(source timestamp tpref
                               &key ,@(mapcar (lambda (x y) `(,x nil ,y))
                                              slot-names did-set)))
          (constructor (intern (format nil "%MAKE-~a" name)
@@ -202,16 +202,16 @@
        (defun ,apply ,apply-args
          ,@(mapcar (lambda (x y z) `(when ,y (setf (,z source) ,x)))
                    slot-names did-set accessor-names)
-         (propagate source timestamp)))))
+         (propagate source timestamp tpref)))))
 
 ;;----------------------------------------------------------------------
 
-(defun propagate (source timestamp)
-  (labels ((fire-predicate-source (predicate-source source timestamp)
+(defun propagate (source timestamp tpref)
+  (labels ((fire-predicate-source (predicate-source)
              (funcall (predicate-source-predicate predicate-source)
-		      predicate-source source timestamp)))
+		      predicate-source source timestamp tpref)))
     (loop :for c :across (event-source-listeners source) :do
-       (fire-predicate-source c source timestamp))))
+       (fire-predicate-source c))))
 
 (defmacro def-predicate-source (name (event-var &rest sources) slots &body body)
   (assert (symbolp event-var))
@@ -266,7 +266,7 @@
 		:for s-slot :in source-slots :collect
 		`(setf (,s-slot result) ,s-type))
 	   result))
-       (defun ,logic (,this ,event-var timestamp)
+       (defun ,logic (,this ,event-var timestamp tpref)
          (declare (ignorable ,event-var))
          (let* ((result
                  (symbol-macrolet
@@ -285,7 +285,7 @@
                 (new-active (not (null result))))
            (setf (,active ,this) new-active)
            (when (not (eq old-active new-active))
-             (propagate ,this timestamp))
+             (propagate ,this timestamp tpref))
            nil))
        (defmethod stop-listening ((listener ,name))
 	 ,@(loop :for s :in source-slots :collect
@@ -400,8 +400,8 @@
   (%make-event-listener :predicate #'%event-listener-body
 			:callback callback))
 
-(defun %event-listener-body (this evt timestamp)
-  (funcall (event-listener-callback this) evt timestamp))
+(defun %event-listener-body (this evt timestamp tpref)
+  (funcall (event-listener-callback this) evt timestamp tpref))
 
 (defmethod listen-to :after
     ((listener event-listener) input &optional timestamp)

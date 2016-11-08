@@ -1,12 +1,10 @@
-(in-package skitter.sdl2.keys)
+(in-package skitter.glop.keys)
 
-(defun key.id (name/event)
-  (etypecase name/event
-    (skitter:button (skitter::event-source-container-index name/event))
-    (keyword (or (position name/event skitter.sdl2::*key-button-names*)
-                 (error "key.id: invalid name ~s" name/event)))
-    (t (error "key.id: Must be given a keyword name or an instance of the button event.~%Recieved ~s"
-              name/event))))
+(defun key.id (name)
+  (labels ((err () (error "key.id: invalid name ~s" name)))
+    (if (keywordp name)
+	(or (position name skitter.glop::*key-button-names*) (err))
+	(err))))
 
 (defconstant key.a 4)
 (defconstant key.b 5)
