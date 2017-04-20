@@ -116,24 +116,20 @@
 ;;--------------------------------------------
 ;; sdl event helpers
 
-(defmacro %case-events ((event &key (method :poll) (timeout nil))
-                        &body event-handlers)
-  `(let (,(when (symbolp event) `(,event (sdl2:new-event))))
-     (loop :until (= 0  (sdl2:next-event ,event ,method ,timeout)) :do
-        (case (sdl2::get-event-type ,event)
-          ,@(loop :for (type params . forms) :in event-handlers
-               :append (let ((type (if (listp type)
-				       type
-				       (list type))))
-                         (loop :for typ :in type :collect
-                            (sdl2::expand-handler event typ params forms)))
-               :into results
-               :finally (return (remove nil results)))))
-     (sdl2:free-event ,event)))
+(defmacro %case-event ((event) &body event-handlers)
+  (assert (symbolp event))
+  `(case (sdl2::get-event-type ,event)
+     ,@(loop :for (type params . forms) :in event-handlers
+          :append (let ((type (if (listp type)
+                                  type
+                                  (list type))))
+                    (loop :for typ :in type :collect
+                       (sdl2::expand-handler event typ params forms)))
+          :into results
+          :finally (return (remove nil results)))))
 
-(defun collect-sdl-events (win &optional tpref)
-  (declare (ignore win))
-  (%case-events (event)
+(defun on-event (event &optional tpref)
+  (%case-event (event)
     (:quit
      (:timestamp ts)
      (skitter:apply-state (system-quitting +system+) (sdl->lisp-time ts) tpref
@@ -142,64 +138,71 @@
     (:windowevent
      (:timestamp ts :event e :data1 x :data2 y)
      (let ((action (aref *window-event-names* e))
-	   (ts (sdl->lisp-time ts))
-	   (win (window 0)))
+           (ts (sdl->lisp-time ts))
+           (win (window 0)))
        (case action
-	 (:moved (apply-pos-2d (window-pos win) ts tpref
+         (:moved (apply-pos-2d (window-pos win) ts tpref
                                :vec (v!int x y)))
-	 (:resized (apply-size-2d (window-size win) ts tpref
+         (:resized (apply-size-2d (window-size win) ts tpref
                                   :vec (v!int x y)))
-	 (:size-changed (apply-size-2d (window-size win) ts tpref
+         (:size-changed (apply-size-2d (window-size win) ts tpref
                                        :vec (v!int x y)))
-	 (:minimized (apply-layout (window-layout win) ts tpref
+         (:minimized (apply-layout (window-layout win) ts tpref
                                    :state :minimized))
-	 (:maximized (apply-layout (window-layout win) ts tpref
+         (:maximized (apply-layout (window-layout win) ts tpref
                                    :state :maximized))
-	 (:restored (apply-layout (window-layout win) ts tpref
+         (:restored (apply-layout (window-layout win) ts tpref
                                   :state :restored))
-	 (:close (apply-state (window-layout win) ts tpref
+         (:close (apply-state (window-layout win) ts tpref
                               :is t)))))
 
     (:mousewheel
      (:timestamp ts :which id :x x :y y)
      (let ((mouse (mouse id)))
        (apply-xy-wheel (mouse-wheel mouse)
-		       (sdl->lisp-time ts)
+                       (sdl->lisp-time ts)
                        tpref
-		       :vec (v! x y))))
+                       :vec (v! x y))))
 
     ((:mousebuttondown :mousebuttonup)
      (:timestamp ts :which id :button b :state s :x x :y y)
      ;; what should we do with clicks? (:clicks c)
      (let ((mouse (mouse id)))
        (apply-button (mouse-button mouse b)
-		     (sdl->lisp-time ts)
+                     (sdl->lisp-time ts)
                      tpref
-		     :down-p (= 1 s))
+                     :down-p (= 1 s))
        (apply-xy-pos (mouse-pos mouse)
-		     (sdl->lisp-time ts)
+                     (sdl->lisp-time ts)
                      tpref
-		     :vec (v! x y))))
+                     :vec (v! x y))))
 
     (:mousemotion
      (:timestamp ts :which id :x x :y y :xrel xrel :yrel yrel)
      ;; what should we do with state? (:state s)
      (let ((mouse (mouse id)))
        (apply-xy-pos (mouse-pos mouse)
-		     (sdl->lisp-time ts)
+                     (sdl->lisp-time ts)
                      tpref
-		     :vec (v! x y)
-		     :relative (v! xrel yrel))))
+                     :vec (v! x y)
+                     :relative (v! xrel yrel))))
 
     ((:keydown :keyup)
      (:timestamp ts :state s :keysym keysym)
      ;; what should we do with repeat (:repeat r)
      (let ((kbd (keyboard 0)))
        (apply-button (keyboard-button
-		      kbd (plus-c:c-ref keysym sdl2-ffi:sdl-keysym :scancode))
-		     (sdl->lisp-time ts)
+                      kbd (plus-c:c-ref keysym sdl2-ffi:sdl-keysym :scancode))
+                     (sdl->lisp-time ts)
                      tpref
-		     :down-p (= 1 s))))))
+                     :down-p (= 1 s))))))
+
+(defun collect-sdl-events (win &optional tpref)
+  (declare (ignore win))
+  (let ((event (sdl2:new-event)))
+    (loop :until (= 0 (sdl2:next-event event :poll)) :do
+       (on-event event tpref))
+    (sdl2:free-event event)))
 
 ;;--------------------------------------------
 ;; intializing
