@@ -98,7 +98,7 @@
   `(typecase ,event
      ,@type-handlers))
 
-(defun on-event (event)
+(defun on-event (event &optional tpref)
   (%case-event (event)
     (glop:close-event
      (skitter:apply-state
@@ -166,7 +166,7 @@
 
 (defun collect-glop-events (win &optional tpref)
   (loop :for event := (glop:next-event win :blocking nil) :while event :do
-     (on-event event)))
+     (on-event event tpref)))
 
 ;;--------------------------------------------
 ;; intializing
