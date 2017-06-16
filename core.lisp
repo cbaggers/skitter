@@ -25,7 +25,8 @@
                          :fill-pointer 0)
              :type (array predicate-source (*))))
 
-(defun %set-container (source listeners-array slot-name index)
+(defun set-event-source-slots (source listeners-array slot-name index)
+  "Set all the slots of an event source"
   (setf (event-source-listeners source) listeners-array
         (event-source-container-slot source) slot-name
         (event-source-container-index source) index))
@@ -49,6 +50,63 @@
                 (error "skitter bug: null listener fired"))))
 
 ;;----------------------------------------------------------------------
+
+(defun gen-populate-event-source (hidden-slot-name
+                                  listener-slot-name
+                                  length
+                                  original-slot-name)
+  ;; {TODO} needs better explanation
+  "gens nil when there is a length as then you add the event sources using
+   the add methods"
+  (when (not length)
+    `(set-event-source-slots
+      (,hidden-slot-name result)
+      (,listener-slot-name result)
+      ',original-slot-name
+      -1)))
+
+(defun gen-add-method (type
+                       hidden-slot-name
+                       length
+                       listener-slot-name
+                       original-slot-name)
+  ;; {TODO} needs better explanation
+  "This is a partner in crimer to #'gen-populate-event-source in that we
+   on need add methods when there is a length"
+  (when length
+    (let ((push (if (numberp length)
+                    'vector-push
+                    'vector-push-extend)))
+      `(defmethod add ((inst ,hidden-slot-name) (source ,type))
+         (let ((arr (,hidden-slot-name inst)))
+           (,push source arr)
+           (set-event-source-slots source
+                                   (,listener-slot-name inst)
+                                   ',original-slot-name
+                                   (position source arr)))))))
+
+(defun gen-input-kind-accessor (original-slot-name
+                                hidden-slot
+                                type-constructor-name)
+  (when (third hidden-slot)
+    `(defun ,original-slot-name (source index)
+       (aref (ensure-n-long (,(first hidden-slot) source)
+                            index
+                            (,type-constructor-name))
+             index))))
+
+(defun intern-listener-name (name package)
+  (intern (format nil "~s-LISTENERS" name) package))
+
+(defun intern-listener-names (names package)
+  (loop :for n :in names :collect (intern-listener-name n package)))
+
+(defun gen-slot-names (slot)
+  (destructuring-bind (first . rest) slot
+    (let ((name (intern (format nil "~a-~a" name x)
+                        (symbol-package name)))))
+    (values
+            )))
 
 (defmacro def-input-kind (name &body slots)
   (labels ((parse-slot (s)
@@ -76,9 +134,7 @@
            (hidden-slot-names (mapcar (lambda (x s) (if (third s) (hide x) x))
                                       original-slot-names
                                       slots))
-           (listener-slot-names
-            (mapcar (lambda (x) (intern (format nil "~s-LISTENERS" x)))
-                    original-slot-names))
+           (listener-slot-names (intern-listener-names original-slot-names))
            (hidden-slots (mapcar #'cons
                                  hidden-slot-names
                                  (mapcar #'rest slots)))
@@ -103,12 +159,7 @@
          (defun ,make ()
            (let ((result (,constructor)))
              ,@(remove nil
-                       (mapcar (lambda (h a l o)
-                                 (when (not l)
-                                   `(%set-container (,h result)
-                                                    (,a result)
-                                                    ',o
-                                                    -1)))
+                       (mapcar #'gen-populate-event-source
                                hidden-slot-names
                                listener-slot-names
                                lengths
@@ -117,27 +168,12 @@
              result))
          (defmethod initialize-kind ((obj ,name)) obj)
          ,@(remove nil
-                   (mapcar (lambda (x s tc)
-                             (when (third s)
-                               `(defun ,x (source index)
-                                  (aref (ensure-n-long (,(first s) source) index
-                                                       (,tc))
-                                        index))))
+                   (mapcar #'gen-input-kind-accessor
                            original-slot-names
                            hidden-slots
                            type-constructors))
          ,@(remove nil
-                   (mapcar (lambda (x a l ls o)
-                             (when l
-                               (let ((push (if (numberp l)
-                                               'vector-push
-                                               'vector-push-extend)))
-                                 `(defmethod add ((inst ,name) (source ,x))
-                                    (let ((arr (,a inst)))
-                                      (,push source arr)
-                                      (%set-container
-                                       source (,ls inst) ',o
-                                       (position source arr)))))))
+                   (mapcar #'gen-add-method
                            types
                            hidden-slot-names
                            lengths

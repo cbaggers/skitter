@@ -2,7 +2,6 @@
 
 ;;----------------------------------------------------------------------
 
-
 (def-event-source button
   (down-p nil boolean))
 
@@ -92,3 +91,5 @@
     (adjust-array +windows+ (1+ n) :fill-pointer (1+ n) :initial-element nil)
     (setf (aref +windows+ n) (make-window)))
   (aref +windows+ n))
+
+;;----------------------------------------------------------------------
