@@ -69,7 +69,7 @@
                                      hidden-slot
                                      control-type)
   (let* ((p (symbol-package original-slot-name))
-         (func-name (symb p "UPDATE-" original-slot-name)))
+         (func-name (symb p "SET-" original-slot-name)))
     (if (isource-array-slot-p hidden-slot)
         `(defun ,func-name (input-source index timestamp data &optional tpref)
            (let ((control (aref (ensure-n-long
