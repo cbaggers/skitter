@@ -2,7 +2,7 @@
 
 (defun mouse.button-id (name/event)
   (etypecase name/event
-    (skitter:button (skitter::event-source-container-index name/event))
+    (skitter:button (skitter::control-container-index name/event))
     (keyword (or (position name/event skitter.sdl2::*mouse-button-names*)
                  (error "mouse.button-id: invalid name ~s" name/event)))
     (t (error "mouse.button-id: Must be given a keyword name or an instance of the button event.~%Recieved ~s"

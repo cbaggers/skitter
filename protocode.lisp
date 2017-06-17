@@ -14,15 +14,15 @@
 (defun make-boom (m g k)
   (tlambda ()
     (then (until (and (keyboard-button k :lctrl)
-		      (keyboard-button k :c)))
-	  (before 200
-	    (if (keboard-button k :a)
-		(skip-step)
-		???????????))
-	  (before 100
-	    (if (gamepad-button g 0)
-		(boom!)
-		???????????)))))
+                      (keyboard-button k :c)))
+          (before 200
+            (if (keboard-button k :a)
+                (skip-step)
+                ???????????))
+          (before 100
+            (if (gamepad-button g 0)
+                (boom!)
+                ???????????)))))
 
 (defun boom! ()
   (print "BOOM!"))
@@ -41,10 +41,10 @@
   (let ((step 0))
     (lambda (evt)
       (tagbody top
-	 (case= step
-	   (0 ())
-	   (1 ())
-	   (2 ()))))))
+         (case= step
+           (0 ())
+           (1 ())
+           (2 ()))))))
 
 ;; - ok so we need to know every event for every input
 ;; - but wait what about mouse button combos...we dont want to be disturbed by
@@ -63,7 +63,7 @@
 
 (defcombo boom (evt &source (m mouse) (g gamepad) (k keyboard))
   :step (and (keyboard-button k :lctrl)
-	     (keyboard-button k :c))
+             (keyboard-button k :c))
   :reset (any other k g event or any m-button event)
 
   :step (before 200 (keboard-button k :a))
@@ -80,29 +80,29 @@
 
 (defcombo boom (evt &source (m mouse button) (key keyboard button)) ()
   (or (and (print 1)
-	   (or (print (key-p 0))
-	       (key-p x))
-	   (button-down-p evt))
+           (or (print (key-p 0))
+               (key-p x))
+           (button-down-p evt))
       (progn (print "reset") (reset)))
 
   (or (and (or (key-p 0)
-	       (key-p key.rctrl))
-	   (not (button-down-p evt))
-	   (print 2))
+               (key-p key.rctrl))
+           (not (button-down-p evt))
+           (print 2))
       (reset))
 
   (or (and (before 200)
-	   (key-p key.a)
-	   (button-down-p evt))
+           (key-p key.a)
+           (button-down-p evt))
       (reset))
 
   (or (and (before 200)
-	   (key-p key.a)
-	   (button-down-p evt))
+           (key-p key.a)
+           (button-down-p evt))
       (reset))
 
   (or (and (before 100)
-	   (button-down-p evt))
+           (button-down-p evt))
       (reset)))
 
 
@@ -119,8 +119,8 @@
 (defun key-watcher (name &optional keyboard)
   (let ((index (get-index-by-name 'keyboard :button name)))
     (if keyboard
-	(lambda () (button-down-p (keyboard-button keyboard index)))
-	(lambda (keyboard) (button-down-p (keyboard-button keyboard index))))))
+        (lambda () (button-down-p (keyboard-button keyboard index)))
+        (lambda (keyboard) (button-down-p (keyboard-button keyboard index))))))
 ;; nah
 
 

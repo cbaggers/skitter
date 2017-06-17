@@ -2,7 +2,7 @@
 
 (uiop:define-package #:skitter
   (:use #:cl #:structy-defclass #:rtg-math #:%rtg-math)
-  (:export :def-input-kind :def-event-source :def-combo-source :defcombo
+  (:export :define-input-source :define-control :def-combo-source :defcombo
            :initialize-kind
            :add
            :make-event-listener :listen-to :stop-listening :whilst-listening-to

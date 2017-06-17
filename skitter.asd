@@ -7,6 +7,13 @@
   :serial t
   :depends-on (:structy-defclass :rtg-math)
   :components ((:file "package")
+               ;; internals
                (:file "hidden")
-               (:file "core")
+               (:file "utils")
+               (:file "control")
+               (:file "input-source")
+               (:file "predicate-source")
+               (:file "combo")
+               (:file "listener")
+               ;; universal controls & sources
                (:file "common")))

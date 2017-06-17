@@ -2,46 +2,49 @@
 
 ;;----------------------------------------------------------------------
 
-(def-event-source button
+(define-control button
   (down-p nil boolean))
 
-(def-event-source xy-pos
-  (vec (v! 0 0) rtg-math.types:vec2)
-  (relative (v! 0 0) rtg-math.types:vec2))
+;; {TODO} split this up, then xy-pos can be pos2, pos-2d can be ipos2 and
+;;        we dont need a slot name. It can just be:
+;;
+;;          (define-control xy-pos rtg-math.types:vec2 (v! 0 0))
+;;
+;;        Where the last bit is a &body that constructs a value
 
-(def-event-source wheel
-  (val 0f0 single-float))
+(define-control position2 rtg-math.types:vec2 (v! 0 0))
+(define-control iposition2 rtg-math.types:ivec2 (v!int 100 100))
+(define-control uposition2 rtg-math.types:uvec2 (v!int 100 100))
 
-(def-event-source xy-wheel
-  (vec (v! 0 0) rtg-math.types:vec2))
+(define-control relative2 rtg-math.types:vec2 (v! 0 0))
+(define-control irelative2 rtg-math.types:vec2 (v! 0 0))
+(define-control urelative2 rtg-math.types:vec2 (v! 0 0))
 
-(def-event-source state
-  (is nil boolean))
+(define-control size2 rtg-math.types:uvec2 (v!uint 100 100))
+(define-control isize2 rtg-math.types:uvec2 (v!uint 100 100))
+(define-control usize2 rtg-math.types:uvec2 (v!uint 100 100))
 
-(def-event-source pos-2d
-  (vec (v!int 100 100) rtg-math.types:ivec2))
+(define-control wheel single-float 0f0)
+(define-control wheel2 rtg-math.types:vec2 (v! 0 0))
 
-(def-event-source size-2d
-  (vec (v!int 100 100) rtg-math.types:ivec2))
+(define-control boolean-state boolean nil)
 
-(def-event-source layout
-  (state :unknown symbol))
+(define-control layout symbol :unknown)
 
 ;;----------------------------------------------------------------------
 
-
-(def-input-kind mouse
+(define-input-source mouse
   (pos xy-pos)
   (wheel xy-wheel)
   (button button *))
 
-(def-input-kind keyboard
+(define-input-source keyboard
   (button button *))
 
-(def-input-kind system
+(define-input-source system
   (quitting state))
 
-(def-input-kind window
+(define-input-source window
   (pos pos-2d)
   (size size-2d)
   (closing state)
@@ -55,7 +58,7 @@
 
 
 (defvar +keyboards+ (make-array 1 :element-type '(or keyboard null)
-				:adjustable t :fill-pointer 0))
+                                :adjustable t :fill-pointer 0))
 
 (defun keyboard (n)
   (when (> (1+ n) (length +keyboards+))
@@ -70,7 +73,7 @@
 
 
 (defvar +mice+ (make-array 1 :element-type '(or null mouse)
-			   :adjustable t :fill-pointer 0))
+                           :adjustable t :fill-pointer 0))
 
 (defun mouse (n)
   (when (> (1+ n) (length +mice+))
@@ -84,7 +87,7 @@
 ;;----------------------------------------------------------------------
 
 (defvar +windows+ (make-array 1 :element-type '(or null window)
-			      :adjustable t :fill-pointer 0))
+                              :adjustable t :fill-pointer 0))
 
 (defun window (n)
   (when (> (1+ n) (length +windows+))
