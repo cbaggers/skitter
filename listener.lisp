@@ -1,10 +1,10 @@
 (in-package :skitter)
 
 ;;----------------------------------------------------------------------
-;; Hmm this is odd. Predicate-source is a control so wouldnt it belong to
+;; Hmm this is odd. predicate-control is a control so wouldnt it belong to
 ;; a input-source?
 
-(deftclass (event-listener (:include predicate-source)
+(deftclass (event-listener (:include predicate-control)
                            (:constructor %make-event-listener))
   (subject nil)
   (callback (error "skitter: event-listener must be created with a callback")

@@ -10,16 +10,16 @@
 ;;        Where the last bit is a &body that constructs a value
 
 (define-control position2 rtg-math.types:vec2 (v! 0 0))
-(define-control iposition2 rtg-math.types:ivec2 (v!int 100 100))
-(define-control uposition2 rtg-math.types:uvec2 (v!int 100 100))
+(define-control iposition2 rtg-math.types:ivec2 (v!int 0 0))
+(define-control uposition2 rtg-math.types:uvec2 (v!int 0 0))
 
 (define-control relative2 rtg-math.types:vec2 (v! 0 0))
 (define-control irelative2 rtg-math.types:vec2 (v! 0 0))
 (define-control urelative2 rtg-math.types:vec2 (v! 0 0))
 
-(define-control size2 rtg-math.types:uvec2 (v!uint 100 100))
-(define-control isize2 rtg-math.types:uvec2 (v!uint 100 100))
-(define-control usize2 rtg-math.types:uvec2 (v!uint 100 100))
+(define-control size2 rtg-math.types:uvec2 (v!uint 0 0))
+(define-control isize2 rtg-math.types:uvec2 (v!uint 0 0))
+(define-control usize2 rtg-math.types:uvec2 (v!uint 0 0))
 
 (define-control wheel single-float 0f0)
 (define-control wheel2 rtg-math.types:vec2 (v! 0 0))
@@ -32,13 +32,14 @@
 
 (define-input-source mouse ()
   (pos position2)
+  (move relative2)
   (wheel wheel2)
   (button boolean-state *))
 
 (define-input-source keyboard ()
   (button boolean-state *))
 
-(define-input-source system ()
+(define-input-source window-manager ()
   (quitting boolean-state))
 
 (define-input-source window ()
@@ -49,7 +50,7 @@
 
 ;;----------------------------------------------------------------------
 
-(defvar +system+ (make-system))
+(defvar +window-manager+ (make-window-manager))
 
 ;;----------------------------------------------------------------------
 
@@ -64,7 +65,7 @@
   (aref +keyboards+ n))
 
 (defun key-down-p (index &optional (keyboard (keyboard 0)))
-  (button-down-p (keyboard-button keyboard index)))
+  (keyboard-button keyboard index))
 
 ;;----------------------------------------------------------------------
 
@@ -79,7 +80,7 @@
   (aref +mice+ n))
 
 (defun mouse-down-p (index &optional (mouse (mouse 0)))
-  (button-down-p (mouse-button mouse index)))
+  (mouse-button mouse index))
 
 ;;----------------------------------------------------------------------
 

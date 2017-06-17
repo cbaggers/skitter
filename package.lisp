@@ -1,29 +1,49 @@
 ;;;; package.lisp
 
+(uiop:define-package #:skitter-hidden
+  (:use #:cl))
+
+(uiop:define-package #:skitter.controls
+    (:use #:cl #:structy-defclass #:rtg-math #:%rtg-math)
+  (:export :position2 :make-position2
+           :iposition2 :make-iposition2
+           :uposition2 :make-uposition2
+           :relative2 :make-relative2
+           :irelative2 :make-irelative2
+           :urelative2 :make-urelative2
+           :size2 :make-size2
+           :isize2 :make-isize2
+           :usize2 :make-usize2
+           :wheel :make-wheel
+           :wheel2 :make-wheel2
+           :boolean-state :make-boolean-state
+           :layout :make-layout))
+
 (uiop:define-package #:skitter
-  (:use #:cl #:structy-defclass #:rtg-math #:%rtg-math)
+    (:use #:cl #:structy-defclass #:rtg-math #:%rtg-math
+          :skitter.controls)
   (:export :define-input-source :define-control :def-combo-source :defcombo
            :initialize-kind
            :add
            :make-event-listener :listen-to :stop-listening :whilst-listening-to
            ;;
-           :state :make-state :state-is :apply-state
-           :button :make-button :apply-button :button-down-p
-           :xy-pos :make-xy-pos :apply-xy-pos :xy-pos-vec :xy-pos-relative
-           :wheel :make-wheel :apply-wheel :wheel-val
-           :xy-wheel :make-xy-wheel :apply-xy-wheel :xy-wheel-vec
-           :pos-2d :make-pos-2d :pos-2d-vec :apply-pos-2d
-           :size-2d :make-size-2d :size-2d-vec :apply-size-2d
-           :layout :make-layout :layout-state :apply-layout
-           ;;
-           :+mice+ :mouse :make-mouse :mouse-pos :mouse-button :mouse-wheel
-           :+keyboard+ :keyboard :make-keyboard :keyboard-button
-           :+system+ :system :make-system :system-quitting
+           :+mice+ :mouse :make-mouse
+           :mouse-pos :set-mouse-pos
+           :mouse-move :set-mouse-move
+           :mouse-button :set-mouse-button
+           :mouse-wheel :set-mouse-wheel
+
+           :+keyboard+ :keyboard :make-keyboard
+           :keyboard-button :set-keyboard-button
+
+           :+window-manager+ :window-manager :make-window-manager
+           :window-manager-quitting :set-window-manager-quitting
+
            :+windows+ :window :make-window
-           :window-pos :window-size :window-closing :window-layout
+           :window-pos :set-window-pos
+           :window-size :set-window-size
+           :window-closing :set-window-closing
+           :window-layout :set-window-layout
            ;;
            :key-down-p :key-id
            :mouse-down-p :mouse-button-id))
-
-(uiop:define-package #:skitter-hidden
-  (:use #:cl))

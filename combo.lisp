@@ -21,7 +21,7 @@
                           (cdr controls)))
          (top (gensym "top"))
          (reset-harder (gensym "reset-harder")))
-    `(def-predicate-source ,name (,event-var ,@raw-controls) ,slots
+    `(define-predicate-control ,name (,event-var ,@raw-controls) ,slots
        (macrolet ((resetting-when (predicate-form &body body)
                     `(if ,predicate-form
                          (progn ,@body)

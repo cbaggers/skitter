@@ -1,7 +1,7 @@
 ;;;; package.lisp
 
 (defpackage #:skitter.sdl2
-  (:use #:cl #:skitter #:rtg-math)
+  (:use #:cl #:skitter #:rtg-math #:skitter.controls)
   (:export :collect-sdl-events))
 
 (defpackage #:skitter.sdl2.keys

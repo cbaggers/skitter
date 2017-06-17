@@ -9,9 +9,9 @@
 (deftclass control
   (container-slot :unknown-slot :type symbol)
   (container-index -1 :type fixnum)
-  (listeners (make-array 0 :element-type 'predicate-source :adjustable t
+  (listeners (make-array 0 :element-type 'predicate-control :adjustable t
                          :fill-pointer 0)
-             :type (array predicate-source (*))))
+             :type (array predicate-control (*))))
 
 (defun set-control-slots (control listeners-array slot-name index)
   "Set all the slots of an event source"
@@ -45,3 +45,12 @@
          (,constructor)))))
 
 ;;----------------------------------------------------------------------
+
+;; (define-predicate-control double-click boolean nil
+;;     (event &control (butt boolean-state))
+;;     ((last-timestamp 0 integer))
+;;   (print event))
+
+;; (define-input-source moose ()
+;;   (button boolean-state *)
+;;   (dub double-click *))

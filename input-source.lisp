@@ -138,10 +138,10 @@
                     (:conc-name nil))
          ,@(mapcar #'parse-input-source-slot hidden-slots)
          ,@(loop :for s :in listener-slot-names :collect
-              `(,s (make-array 0 :element-type 'predicate-source
+              `(,s (make-array 0 :element-type 'predicate-control
                                :adjustable t
                                :fill-pointer 0)
-                   :type (array predicate-source (*)))))
+                   :type (array predicate-control (*)))))
 
        ;; public constructor
        (defun ,(input-source-constructor-name name) ()
@@ -176,12 +176,12 @@
        ,@(gen-add-methods name types hidden-slot-names lengths
                           listener-slot-names original-slot-names)
 
-       (defmethod remove-listener ((listener predicate-source) (input ,name))
+       (defmethod remove-listener ((listener predicate-control) (input ,name))
          ,@(loop :for l :in listener-slot-names :collect
               `(shifting-remove (,l input) listener *null-listener*))
          nil)
 
-       (defmethod listen-to ((listener predicate-source) (input ,name)
+       (defmethod listen-to ((listener predicate-control) (input ,name)
                              &optional slot-name)
          (let ((arr
                 (ecase slot-name

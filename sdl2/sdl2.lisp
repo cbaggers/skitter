@@ -132,8 +132,7 @@
   (%case-event (event)
     (:quit
      (:timestamp ts)
-     (skitter:apply-state (system-quitting +system+) (sdl->lisp-time ts) tpref
-                          :is t))
+     (set-window-manager-quitting +window-manager+ (sdl->lisp-time ts) t tpref))
 
     (:windowevent
      (:timestamp ts :event e :data1 x :data2 y)
@@ -141,61 +140,43 @@
            (ts (sdl->lisp-time ts))
            (win (window 0)))
        (case action
-         (:moved (apply-pos-2d (window-pos win) ts tpref
-                               :vec (v!int x y)))
-         (:resized (apply-size-2d (window-size win) ts tpref
-                                  :vec (v!int x y)))
-         (:size-changed (apply-size-2d (window-size win) ts tpref
-                                       :vec (v!int x y)))
-         (:minimized (apply-layout (window-layout win) ts tpref
-                                   :state :minimized))
-         (:maximized (apply-layout (window-layout win) ts tpref
-                                   :state :maximized))
-         (:restored (apply-layout (window-layout win) ts tpref
-                                  :state :restored))
-         (:close (apply-state (window-layout win) ts tpref
-                              :is t)))))
+         (:moved (set-window-pos win ts (v!int x y) tpref))
+         (:resized (set-window-size win ts (v!int x y) tpref))
+         (:size-changed (set-window-size win ts (v!int x y) tpref))
+         (:minimized (set-window-layout win ts :minimized tpref))
+         (:maximized (set-window-layout win ts :maximized tpref))
+         (:restored (set-window-layout win ts :restored tpref))
+         (:close (set-window-layout win ts t tpref)))))
 
     (:mousewheel
      (:timestamp ts :which id :x x :y y)
      (let ((mouse (mouse id)))
-       (apply-xy-wheel (mouse-wheel mouse)
-                       (sdl->lisp-time ts)
-                       tpref
-                       :vec (v! x y))))
+       (set-mouse-wheel mouse (sdl->lisp-time ts) (v! x y) tpref)))
 
     ((:mousebuttondown :mousebuttonup)
      (:timestamp ts :which id :button b :state s :x x :y y)
      ;; what should we do with clicks? (:clicks c)
      (let ((mouse (mouse id)))
-       (apply-button (mouse-button mouse b)
-                     (sdl->lisp-time ts)
-                     tpref
-                     :down-p (= 1 s))
-       (apply-xy-pos (mouse-pos mouse)
-                     (sdl->lisp-time ts)
-                     tpref
-                     :vec (v! x y))))
+       (set-mouse-button mouse b (sdl->lisp-time ts) (= 1 s) tpref)
+       (set-mouse-pos mouse (sdl->lisp-time ts) (v! x y) tpref)))
 
     (:mousemotion
      (:timestamp ts :which id :x x :y y :xrel xrel :yrel yrel)
      ;; what should we do with state? (:state s)
      (let ((mouse (mouse id)))
-       (apply-xy-pos (mouse-pos mouse)
-                     (sdl->lisp-time ts)
-                     tpref
-                     :vec (v! x y)
-                     :relative (v! xrel yrel))))
+       (set-mouse-pos mouse (sdl->lisp-time ts) (v! x y) tpref)
+       (set-mouse-move mouse (sdl->lisp-time ts) (v! xrel yrel) tpref)))
 
     ((:keydown :keyup)
      (:timestamp ts :state s :keysym keysym)
      ;; what should we do with repeat (:repeat r)
      (let ((kbd (keyboard 0)))
-       (apply-button (keyboard-button
-                      kbd (plus-c:c-ref keysym sdl2-ffi:sdl-keysym :scancode))
-                     (sdl->lisp-time ts)
-                     tpref
-                     :down-p (= 1 s))))))
+       (set-keyboard-button
+        kbd
+        (plus-c:c-ref keysym sdl2-ffi:sdl-keysym :scancode)
+        (sdl->lisp-time ts)
+        (= 1 s)
+        tpref)))))
 
 (defun collect-sdl-events (win &optional tpref)
   (declare (ignore win))
@@ -209,8 +190,8 @@
 
 (defmethod initialize-kind :after ((kind keyboard))
   (loop for i across *key-button-names* do
-       (add kind (make-button))))
+       (add kind (make-boolean-state))))
 
 (defmethod initialize-kind :after ((kind mouse))
   (loop for i across *mouse-button-names* do
-       (add kind (make-button))))
+       (add kind (make-boolean-state))))
