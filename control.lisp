@@ -45,12 +45,3 @@
          (,constructor)))))
 
 ;;----------------------------------------------------------------------
-
-;; (define-predicate-control double-click boolean nil
-;;     (event &control (butt boolean-state))
-;;     ((last-timestamp 0 integer))
-;;   (print event))
-
-;; (define-input-source moose ()
-;;   (button boolean-state *)
-;;   (dub double-click *))

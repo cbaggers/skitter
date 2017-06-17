@@ -2,9 +2,13 @@
 
 (defun key.id (name/event)
   (etypecase name/event
-    (skitter:button (skitter::control-container-index name/event))
-    (keyword (or (position name/event skitter.sdl2::*key-button-names*)
-                 (error "key.id: invalid name ~s" name/event)))
+    (skitter.controls:boolean-state
+     (skitter::control-container-index name/event))
+
+    (keyword
+     (or (position name/event skitter.sdl2::*key-button-names*)
+         (error "key.id: invalid name ~s" name/event)))
+
     (t (error "key.id: Must be given a keyword name or an instance of the button event.~%Recieved ~s"
               name/event))))
 

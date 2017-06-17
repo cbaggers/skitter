@@ -40,6 +40,7 @@
          (make (symb p "MAKE-" name))
          (constructor (symb p "%MAKE-" name))
          (logic (symb p "%" name "-BODY" ))
+         (control-names (remove-duplicates (mapcar #'first controls)))
          (control-types (remove-duplicates (mapcar #'second controls)))
          (control-slots (loop :for s :in control-types :collect
                            (symb p name "-" s)))
@@ -66,15 +67,16 @@
                    accessor-names
                    internal-slots))
 
-       (defun ,make (&key ,@control-types)
+       (defun ,make (&key ,@control-names)
          (let ((result (,constructor :predicate #',logic)))
-           ,@(loop :for (name kind slot) :in controls
-                :do (identity name) :append
-                `((assert (typep ,kind ',kind))
-                  (listen-to result ,kind ,slot)))
+           ,@(loop :for (nil kind slot) :in controls
+                :for arg-name :in control-names :append
+                `((assert (typep ,arg-name ',kind))
+                  (listen-to result ,arg-name ,slot)))
            ,@(loop :for s-type :in control-types
+                :for arg-name :in control-names
                 :for s-slot :in control-slots :collect
-                `(setf (,s-slot result) ,s-type))
+                `(setf (,s-slot result) ,arg-name))
            result))
 
        (defun ,logic (,this ,event-var timestamp tpref)
@@ -118,3 +120,13 @@
   nil)
 
 ;;----------------------------------------------------------------------
+;; Messing around
+
+;; (define-predicate-control double-click boolean nil
+;;     (event &control (butt boolean-state))
+;;     ((last-timestamp 0 integer))
+;;   (print event))
+
+;; (define-input-source moose ()
+;;   (button boolean-state *)
+;;   (dub double-click *))
