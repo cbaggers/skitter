@@ -5,6 +5,9 @@
 (defgeneric remove-listener (listener input))
 (defgeneric initialize-kind (obj))
 
+(defun isource-array-slot-p (slot)
+  (or (string= :* (third slot))
+      (numberp (third slot))))
 ;;----------------------------------------------------------------------
 
 (defun gen-populate-control (hidden-slot-name
@@ -48,15 +51,42 @@
                                   ',original-slot-name
                                   (position control arr)))))))))
 
-(defun gen-input-kind-accessor (original-slot-name
-                                hidden-slot
-                                type-constructor-name)
-  (when (third hidden-slot)
-    `(defun ,original-slot-name (control index)
-       (aref (ensure-n-long (,(first hidden-slot) control)
-                            index
-                            (,type-constructor-name))
-             index))))
+(defun gen-input-source-slot-getter (original-slot-name
+                                     hidden-slot
+                                     control-type)
+  (if (isource-array-slot-p hidden-slot)
+      `(defun ,original-slot-name (input-source index)
+         (,(control-data-acc-name control-type)
+           (aref (ensure-n-long (,(first hidden-slot) input-source)
+                                index
+                                (,(control-constructor-name control-type)))
+                 index)))
+      `(defun ,original-slot-name (input-source)
+         (,(control-data-acc-name control-type)
+           (,(first hidden-slot) input-source)))))
+
+(defun gen-input-source-slot-setter (original-slot-name
+                                     hidden-slot
+                                     control-type)
+  (let* ((p (symbol-package original-slot-name))
+         (func-name (symb p "UPDATE-" original-slot-name)))
+    (if (isource-array-slot-p hidden-slot)
+        `(defun ,func-name (input-source index timestamp data &optional tpref)
+           (let ((control (aref (ensure-n-long
+                                 (,(first hidden-slot) input-source)
+                                 index
+                                 (,(control-constructor-name control-type)))
+                                index)))
+             (setf (,(control-data-acc-name control-type) control)
+                   data)
+             (propagate control timestamp tpref)
+             data))
+        `(defun ,func-name (input-source timestamp data &optional tpref)
+           (let ((control (,(first hidden-slot) input-source)))
+             (setf (,(control-data-acc-name control-type) control)
+                   data)
+             (propagate control timestamp tpref)
+             data)))))
 
 (defun intern-listener-name (name)
   (intern (format nil "~s-LISTENERS" name) (symbol-package name)))
@@ -66,8 +96,7 @@
 
 (defun parse-input-source-slot (s)
   (let* ((name (first s))
-         (array? (or (string= :* (third s))
-                     (numberp (third s))))
+         (array? (isource-array-slot-p s))
          (elem-type (when array? (second s)))
          (len (when array? (third s)))
          (type (if array?
@@ -83,31 +112,30 @@
                               (symbol-package type))))))
     `(,name ,init :type ,type)))
 
-(defmacro define-input-source (name &body slots)
-  (let* ((original-slot-names
-          (mapcar (lambda (x) (intern (format nil "~a-~a" name x)
-                                      (symbol-package name)))
-                  (mapcar #'first slots)))
-         (hidden-slot-names (mapcar (lambda (x s) (if (third s) (hide x) x))
-                                    original-slot-names
-                                    slots))
+(defun gen-input-source-slot-name (type-name user-slot-name)
+  (symb (symbol-package type-name) type-name :- user-slot-name))
+
+(defun input-source-hidden-constructor-name (type-name)
+  (intern (format nil "%MAKE-~a" type-name) :skitter-hidden))
+
+(defun input-source-constructor-name (type-name)
+  (intern (format nil "MAKE-~a" type-name) (symbol-package type-name)))
+
+(defmacro define-input-source (name (&key static) &body slots)
+  (let* ((original-slot-names (mapcar (lambda (x) (gen-input-source-slot-name
+                                                   name x))
+                                      (mapcar #'first slots)))
+         (hidden-slot-names (mapcar #'hide original-slot-names))
          (listener-slot-names (intern-listener-names original-slot-names))
-         (hidden-slots (mapcar #'cons
-                               hidden-slot-names
-                               (mapcar #'rest slots)))
+         (hidden-slots (mapcar #'cons hidden-slot-names (mapcar #'rest slots)))
          (types (mapcar #'second slots))
-         (constructor (intern (format nil "%MAKE-~a" name)
-                              (symbol-package name)))
-         (make (intern (format nil "MAKE-~a" name)
-                       (symbol-package name)))
+         (constructor (input-source-hidden-constructor-name name))
          (lengths (mapcar #'third slots))
-         (type-constructors (mapcar (lambda (n)
-                                      (intern (format nil "MAKE-~a" n)
-                                              (symbol-package n)))
-                                    types)))
+         (def (if static 'defstruct 'deftclass)))
     `(progn
-       (deftclass (,name (:constructor ,constructor)
-                         (:conc-name nil))
+       ;; Type
+       (,def (,name (:constructor ,constructor)
+                    (:conc-name nil))
          ,@(mapcar #'parse-input-source-slot hidden-slots)
          ,@(loop :for s :in listener-slot-names :collect
               `(,s (make-array 0 :element-type 'predicate-source
@@ -115,28 +143,35 @@
                                :fill-pointer 0)
                    :type (array predicate-source (*)))))
 
-       (defun ,make ()
+       ;; public constructor
+       (defun ,(input-source-constructor-name name) ()
          (let ((result (,constructor)))
-           ,@(remove nil
-                     (mapcar #'gen-populate-control
-                             hidden-slot-names
-                             listener-slot-names
-                             lengths
-                             original-slot-names))
+           ,@(denil
+              (mapcar #'gen-populate-control
+                      hidden-slot-names
+                      listener-slot-names
+                      lengths
+                      original-slot-names))
            (initialize-kind result)
            result))
 
+       ;; - Internal -
+       ;; Exists so backends can hook onto this event and populate the device
+       ;; elements. E.g. adding whatever keys or buttons the backend supports
        (defmethod initialize-kind ((obj ,name))
-         "- Internal -
-            Exists so backends can hook onto this event and populate the device
-            elements. E.g. adding whatever keys or buttons the backend supports"
          obj)
 
+       ;;
        ,@(denil
-          (mapcar #'gen-input-kind-accessor
+          (mapcar #'gen-input-source-slot-getter
                   original-slot-names
                   hidden-slots
-                  type-constructors))
+                  types))
+       ,@(denil
+          (mapcar #'gen-input-source-slot-setter
+                  original-slot-names
+                  hidden-slots
+                  types))
 
        ,@(gen-add-methods name types hidden-slot-names lengths
                           listener-slot-names original-slot-names)

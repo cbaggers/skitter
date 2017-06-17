@@ -24,31 +24,24 @@
 ;;----------------------------------------------------------------------
 
 (defun control-hidden-constructor-name (control-type)
-  (intern (format nil "%MAKE-~a" control-type) :skitter-hidden))
+  (symb :skitter-hidden "%MAKE-" control-type))
 
 (defun control-constructor-name (control-type)
-  (intern (format nil "MAKE-~a" control-type) (symbol-package control-type)))
+  (symb (symbol-package control-type) "MAKE-" control-type))
 
 (defun control-data-acc-name (control-type)
-  (intern (format nil "~a-DATA" control-type) (symbol-package control-type)))
-
-(defun control-apply-name (control-type)
-  (intern (format nil "APPLY-~a" control-type) (symbol-package control-type)))
+  (symb (symbol-package control-type) control-type "-DATA"))
 
 (defmacro define-control (name type init-val)
   (let* ((constructor (control-hidden-constructor-name name)))
     `(progn
        (deftclass (,name (:include control)
+                         (:conc-name nil)
                          (:constructor ,constructor))
-         (data ,init-val :type ,type))
+         (,(control-data-acc-name name) ,init-val :type ,type))
 
        ;; This exists so people can't set values via the constructor
        (defun ,(control-constructor-name name) ()
-         (,constructor))
-
-       (defun ,(control-apply-name name) (control timestamp data
-                                          &optional tpref)
-         (setf (,(control-data-acc-name name) control) data)
-         (propagate control timestamp tpref)))))
+         (,constructor)))))
 
 ;;----------------------------------------------------------------------

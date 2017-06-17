@@ -2,9 +2,6 @@
 
 ;;----------------------------------------------------------------------
 
-(define-control button
-  (down-p nil boolean))
-
 ;; {TODO} split this up, then xy-pos can be pos2, pos-2d can be ipos2 and
 ;;        we dont need a slot name. It can just be:
 ;;
@@ -33,21 +30,21 @@
 
 ;;----------------------------------------------------------------------
 
-(define-input-source mouse
-  (pos xy-pos)
-  (wheel xy-wheel)
-  (button button *))
+(define-input-source mouse ()
+  (pos position2)
+  (wheel wheel2)
+  (button boolean-state *))
 
-(define-input-source keyboard
-  (button button *))
+(define-input-source keyboard ()
+  (button boolean-state *))
 
-(define-input-source system
-  (quitting state))
+(define-input-source system ()
+  (quitting boolean-state))
 
-(define-input-source window
-  (pos pos-2d)
-  (size size-2d)
-  (closing state)
+(define-input-source window ()
+  (pos iposition2)
+  (size usize2)
+  (closing boolean-state)
   (layout layout))
 
 ;;----------------------------------------------------------------------
