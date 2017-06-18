@@ -5,6 +5,6 @@
     :serial t
     :depends-on (:skitter :glop)
     :components ((:file "glop/package")
-		 (:file "glop/glop")
-		 (:file "glop/keys")
-		 (:file "glop/mouse-buttons")))
+                 (:file "glop/glop")
+                 (:file "glop/keys")
+                 (:file "glop/mouse-buttons")))

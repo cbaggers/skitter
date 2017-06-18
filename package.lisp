@@ -3,29 +3,31 @@
 (uiop:define-package #:skitter-hidden
   (:use #:cl))
 
-(uiop:define-package #:skitter.controls
+(uiop:define-package #:skitter.internals
     (:use #:cl #:structy-defclass #:rtg-math #:%rtg-math)
-  (:export :position2 :make-position2
-           :iposition2 :make-iposition2
-           :uposition2 :make-uposition2
-           :relative2 :make-relative2
-           :irelative2 :make-irelative2
-           :urelative2 :make-urelative2
-           :size2 :make-size2
-           :isize2 :make-isize2
-           :usize2 :make-usize2
-           :wheel :make-wheel
-           :wheel2 :make-wheel2
-           :boolean-state :make-boolean-state
-           :layout :make-layout))
+  (:export
+   ;; controls
+   :position2 :make-position2
+   :iposition2 :make-iposition2
+   :uposition2 :make-uposition2
+   :relative2 :make-relative2
+   :irelative2 :make-irelative2
+   :urelative2 :make-urelative2
+   :size2 :make-size2
+   :isize2 :make-isize2
+   :usize2 :make-usize2
+   :wheel :make-wheel
+   :wheel2 :make-wheel2
+   :boolean-state :make-boolean-state
+   :layout :make-layout
+   ;; sources
+   :define-input-source :define-control :def-combo-source :defcombo
+   :initialize-kind :add))
 
 (uiop:define-package #:skitter
     (:use #:cl #:structy-defclass #:rtg-math #:%rtg-math
-          :skitter.controls)
-  (:export :define-input-source :define-control :def-combo-source :defcombo
-           :initialize-kind
-           :add
-           :make-event-listener :listen-to :stop-listening :whilst-listening-to
+          :skitter.internals)
+  (:export :make-event-listener :listen-to :stop-listening :whilst-listening-to
            ;;
            :+mice+ :mouse :make-mouse
            :mouse-pos :set-mouse-pos

@@ -17,10 +17,10 @@
 
 ;;----------------------------------------------------------------------
 
-(defun propagate (control timestamp tpref)
+(defun propagate (data control input-source timestamp tpref)
   (loop :for predicate-control :across (control-listeners control) :do
      (funcall (predicate-control-predicate predicate-control)
-              predicate-control control timestamp tpref)))
+              data predicate-control input-source timestamp tpref)))
 
 ;;----------------------------------------------------------------------
 
@@ -78,12 +78,11 @@
                 :for s-slot :in control-slots :collect
                 `(setf (,s-slot result) ,arg-name))
            result))
-
-       (defun ,logic (,this ,event-var timestamp tpref)
+       (defun ,logic (,event-var ,this input-source timestamp tpref)
          (declare (ignorable ,event-var tpref timestamp))
          (labels ((fire (new-val &optional tpref)
                     (setf (,(control-data-acc-name name) ,this) new-val)
-                    (propagate ,this timestamp tpref)))
+                    (propagate new-val ,this input-source timestamp tpref)))
            (symbol-macrolet
                (,@(loop :for s-type :in control-types
                      :for s-slot :in control-slots :collect

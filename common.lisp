@@ -2,13 +2,6 @@
 
 ;;----------------------------------------------------------------------
 
-;; {TODO} split this up, then xy-pos can be pos2, pos-2d can be ipos2 and
-;;        we dont need a slot name. It can just be:
-;;
-;;          (define-control xy-pos rtg-math.types:vec2 (v! 0 0))
-;;
-;;        Where the last bit is a &body that constructs a value
-
 (define-control position2 rtg-math.types:vec2 (v! 0 0))
 (define-control iposition2 rtg-math.types:ivec2 (v!int 0 0))
 (define-control uposition2 rtg-math.types:uvec2 (v!int 0 0))

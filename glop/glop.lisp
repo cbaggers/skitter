@@ -101,58 +101,53 @@
 (defun on-event (event &optional tpref)
   (%case-event (event)
     (glop:close-event
-     (skitter:apply-state
-      (system-quitting +system+) (get-internal-real-time) tpref
-      :is t))
+     (set-window-manager-quitting
+      +window-manager+ (get-internal-real-time) t tpref))
 
     (glop:resize-event
-     (apply-size-2d (window-size (window 0)) (get-internal-real-time) tpref
-                    :vec (v!int (glop:width event) (glop:height event))))
+     (set-window-size (window 0) (get-internal-real-time)
+                      (v!uint (glop:width event) (glop:height event))
+                      tpref))
 
     (glop:mouse-motion-event
      (let* ((mouse-id 0)
             (mouse (mouse mouse-id)))
-       (apply-xy-pos (mouse-pos mouse)
-                     (get-internal-real-time)
-                     tpref
-                     :vec (v! (glop:x event) (glop:y event))
-                     :relative (v! (glop:dx event) (glop:dy event)))))
+       (set-mouse-pos mouse
+                      (get-internal-real-time)
+                      (v! (glop:x event) (glop:y event))
+                      tpref)
+       (set-mouse-move mouse
+                      (get-internal-real-time)
+                      (v! (glop:dx event) (glop:dy event))
+                      tpref)))
 
     (glop:button-press-event
      (let* ((mouse-id 0)
             (mouse (mouse mouse-id)))
-       (apply-button (mouse-button mouse (glop:button event))
-                     (get-internal-real-time)
-                     tpref
-                     :down-p t)))
+       (set-mouse-button
+        mouse (glop:button event) (get-internal-real-time) t tpref)))
 
     (glop:button-release-event
      (let* ((mouse-id 0)
             (mouse (mouse mouse-id)))
-       (apply-button (mouse-button mouse (glop:button event))
-                     (get-internal-real-time)
-                     tpref
-                     :down-p nil)))
+       (set-mouse-button
+        mouse (glop:button event) (get-internal-real-time) nil tpref)))
 
     (glop:key-press-event
      ;; (glop:keycode #:g1761)
      ;; (glop:keysym #:g1761)
      ;; (glop:text #:g1761)
      (let ((kbd (keyboard 0)))
-       (apply-button (keyboard-button kbd (print (glop:keycode event)))
-                     (get-internal-real-time)
-                     tpref
-                     :down-p t)))
+       (set-keyboard-button
+        kbd (glop:keycode event) (get-internal-real-time) t tpref)))
 
     (glop:key-release-event
      ;; (glop:keycode #:g1761)
      ;; (glop:keysym #:g1761)
      ;; (glop:text #:g1761)
      (let ((kbd (keyboard 0)))
-       (apply-button (keyboard-button kbd (glop:keycode event))
-                     (get-internal-real-time)
-                     tpref
-                     :down-p nil)))
+       (set-keyboard-button
+        kbd (glop:keycode event) (get-internal-real-time) nil tpref)))
 
     ;; (glop:expose-event
     ;;  (glop:on-resize win (glop:width #:g1761) (glop:height #:g1761))
@@ -174,9 +169,9 @@
 (defmethod initialize-kind :after ((kind keyboard))
   (loop for i across *key-button-names* do
        (identity i)
-       (add kind (make-button))))
+       (add kind (make-boolean-state))))
 
 (defmethod initialize-kind :after ((kind mouse))
   (loop for i across *mouse-button-names* do
        (identity i)
-       (add kind (make-button))))
+       (add kind (make-boolean-state))))

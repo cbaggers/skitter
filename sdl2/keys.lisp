@@ -2,7 +2,7 @@
 
 (defun key.id (name/event)
   (etypecase name/event
-    (skitter.controls:boolean-state
+    (skitter.internals:boolean-state
      (skitter::control-container-index name/event))
 
     (keyword

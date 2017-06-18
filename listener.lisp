@@ -14,8 +14,9 @@
   (%make-event-listener :predicate #'%event-listener-body
                         :callback callback))
 
-(defun %event-listener-body (this evt timestamp tpref)
-  (funcall (event-listener-callback this) evt timestamp tpref))
+(defun %event-listener-body (data this input-source timestamp tpref)
+  (funcall (event-listener-callback this)
+           data input-source timestamp tpref))
 
 (defmethod listen-to :after
     ((listener event-listener) input &optional timestamp)
