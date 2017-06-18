@@ -1,9 +1,7 @@
 (in-package :skitter)
 
-(defgeneric listen-to (listener input &optional slot-name))
+(defgeneric get-control (input-source &optional slot-name index))
 (defgeneric initialize-kind (obj))
-(defgeneric add-logical-control (input-source logicial-control))
-(defgeneric remove-logical-control (input-source logicial-control))
 
 (defun isource-array-slot-p (slot)
   (or (string= :* (third slot))
@@ -12,7 +10,6 @@
 
 (defun gen-populate-control (control-type
                              hidden-slot-name
-                             listener-slot-name
                              length
                              original-slot-name)
   ;; {TODO} needs better explanation
@@ -22,7 +19,6 @@
     `(set-control-slots
       ,control-type
       (,hidden-slot-name result)
-      (,listener-slot-name result)
       ',original-slot-name
       -1)))
 
@@ -30,7 +26,6 @@
                         types
                         hidden-slot-names
                         lengths
-                        listener-slot-names
                         original-slot-names)
   "This is a partner in crimer to #'gen-populate-control in that we
    on need add methods when there is a length"
@@ -38,7 +33,6 @@
    (loop :for type :in types
       :for hidden-slot-name :in hidden-slot-names
       :for length :in lengths
-      :for listener-slot-name :in listener-slot-names
       :for original-slot-name :in original-slot-names
       :when length :collect
       (when length
@@ -50,7 +44,6 @@
                (,push control arr)
                (set-control-slots ,type
                                   control
-                                  (,listener-slot-name inst)
                                   ',original-slot-name
                                   (position control arr)))))))))
 
@@ -60,6 +53,7 @@
   (if (isource-array-slot-p hidden-slot)
       `(defun ,original-slot-name (input-source index)
          (,(control-data-acc-name control-type)
+           ;; {TODO} I still dont like this being in the aref
            (aref (ensure-n-long (,(first hidden-slot) input-source)
                                 index
                                 (,(control-constructor-name control-type)))
@@ -75,6 +69,7 @@
          (func-name (symb p "SET-" original-slot-name)))
     (if (isource-array-slot-p hidden-slot)
         `(defun ,func-name (input-source index timestamp data &optional tpref)
+           ;; {TODO} I still dont like this being in the aref
            (let ((control (aref (ensure-n-long
                                  (,(first hidden-slot) input-source)
                                  index
@@ -91,16 +86,7 @@
              (propagate data control input-source timestamp tpref)
              data)))))
 
-(defun intern-logi-hashtable-name (input-source-type-name)
-  (intern-hidden input-source-type-name "-LOGICAL-CONTROLS"))
-
-(defun intern-listener-name (name)
-  (symb (symbol-package name) name "-LISTENERS"))
-
-(defun intern-listener-names (names)
-  (loop :for n :in names :collect (intern-listener-name n)))
-
-(defun parse-input-source-slot (s)
+(defun gen-struct-slot-from-input-source-slot (s)
   (let* ((name (first s))
          (array? (isource-array-slot-p s))
          (elem-type (when array? (second s)))
@@ -131,24 +117,19 @@
   (let* ((original-slot-names (mapcar (lambda (x) (gen-input-source-slot-name
                                                    name x))
                                       (mapcar #'first slots)))
-         (hidden-slot-names (mapcar #'hide original-slot-names))
-         (listener-slot-names (intern-listener-names original-slot-names))
-         (hidden-slots (mapcar #'cons hidden-slot-names (mapcar #'rest slots)))
          (types (mapcar #'second slots))
-         (constructor (input-source-hidden-constructor-name name))
          (lengths (mapcar #'third slots))
+         ;;
+         (hidden-slot-names (mapcar #'hide original-slot-names))
+         (hidden-slots (mapcar #'cons hidden-slot-names (mapcar #'rest slots)))
+         ;;
+         (constructor (input-source-hidden-constructor-name name))
          (def (if static 'defstruct 'deftclass)))
     `(progn
        ;; Type
        (,def (,name (:constructor ,constructor)
                     (:conc-name nil))
-         ,@(mapcar #'parse-input-source-slot hidden-slots)
-         ,@(loop :for s :in listener-slot-names :collect
-              `(,s (make-array 0 :element-type 'event-listener
-                               :adjustable t
-                               :fill-pointer 0)
-                   :type (array event-listener (*))))
-         (,(intern-logi-hashtable-name name) (make-hash-table :test #'equal)))
+         ,@(mapcar #'gen-struct-slot-from-input-source-slot hidden-slots))
 
        ;; public constructor
        (defun ,(input-source-constructor-name name) ()
@@ -157,7 +138,6 @@
               (mapcar #'gen-populate-control
                       types
                       hidden-slot-names
-                      listener-slot-names
                       lengths
                       original-slot-names))
            (initialize-kind result)
@@ -182,37 +162,24 @@
                   types))
 
        ,@(gen-add-methods name types hidden-slot-names lengths
-                          listener-slot-names original-slot-names)
+                           original-slot-names)
 
-       (defmethod add-logical-control ((input-source ,name)
-                                       logicial-control)
-         (setf (gethash (class-name (class-of logicial-control))
-                        (,(intern-logi-hashtable-name name) input-source))
-               logicial-control))
+       (defmethod get-control ((input-source ,name) &optional slot-name index)
+         (ecase slot-name
+           ,@(loop :for (cname nil length) :in slots
+                :for slot-name :in hidden-slot-names :collect
+                (let ((kwd (intern (symbol-name cname) :keyword))
+                      (msg (format nil "SKITTER: ~a in ~a is not an array of controls. No index is required"
+                                   cname name)))
+                  (if length
+                      `(,kwd (aref (,slot-name input-source) index))
+                      `(,kwd
+                        (assert (null index) () ,msg)
+                        (,slot-name input-source)))))))
 
-       (defmethod remove-logical-control ((input-source ,name)
-                                          logical-control-type)
-         (free-control
-          (gethash logical-control-type
-                   (,(intern-logi-hashtable-name name) input-source)))
-         (setf (gethash logical-control-type
-                        (,(intern-logi-hashtable-name name) input-source))
-               nil))
-
-       (defmethod remove-listener ((listener event-listener) (input ,name))
-         ,@(loop :for l :in listener-slot-names :collect
-              `(shifting-remove (,l input) listener *null-listener*))
-         nil)
-
-       (defmethod listen-to ((listener event-listener) (input ,name)
-                             &optional slot-name)
-         (let ((arr
-                (ecase slot-name
-                  ,@(loop :for (s) :in slots
-                       :for l :in listener-slot-names :collect
-                       `(,(intern (symbol-name s) :keyword)
-                          (,l input))))))
-           (vector-push-extend listener arr)
-           (values listener input))))))
+       (defmethod listen-to ((listener event-listener) (input-source ,name)
+                             slot-name &optional index)
+         (listen-to-control (get-control listener input-source slot-name index)
+                            listener)))))
 
 ;;----------------------------------------------------------------------

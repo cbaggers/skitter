@@ -28,7 +28,7 @@
           :skitter.internals)
   (:import-from :alexandria :with-gensyms)
   (:export :make-event-listener :listen-to :stop-listening :whilst-listening-to
-           :define-logical-control :remove-logical-control
+           :define-logical-control :remove-control
            ;;
            :+mice+ :mouse :make-mouse
            :mouse-pos :set-mouse-pos

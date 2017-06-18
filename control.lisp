@@ -12,9 +12,10 @@
 
 (defgeneric add (inst control))
 (defgeneric control-listeners (control))
-(defgeneric free-control (control)
-  (:method ((control t))
-    nil))
+(defgeneric listen-to-control (control listener))
+(defgeneric remove-listener (listener input))
+(defgeneric remove-control (control)
+  (:method ((control t)) nil))
 
 ;;----------------------------------------------------------------------
 
@@ -53,11 +54,24 @@
        ;; This exists so people can't set values via the constructor
        (defun ,(control-constructor-name name) ()
          (,constructor))
+       (defmethod listen-to-control ((control ,name) (listener event-listener))
+         (let ((arr (,(control-listeners-name name) control)))
+           (vector-push-extend listener arr)
+           (setf (event-listener-control listener) control)
+           listener))
        (defmethod control-listeners ((control ,name))
-         (,(control-listeners-name name) control)))))
+         (,(control-listeners-name name) control))
+       (defmethod remove-listener ((listener event-listener) (control ,name))
+         (shifting-remove (,(control-listeners-name name) control)
+                          listener
+                          *null-listener*)
+         nil))))
 
 ;;----------------------------------------------------------------------
 
+;; {TODO} make this control specific as it's the only one using
+;;        control-listeners.
+;;        Would also need adding to logical-control
 (defun propagate (data control input-source timestamp tpref)
   (loop :for listener :across (control-listeners control) :do
      (funcall (event-listener-callback listener)
@@ -65,19 +79,14 @@
 
 ;;----------------------------------------------------------------------
 
-(defmacro set-control-slots (control-type
-                             control listeners-array slot-name index)
+(defmacro set-control-slots (control-type control slot-name index)
   "Set all the slots of an event source"
-  (with-gensyms (ctrl current l-arr s-name idx)
+  (with-gensyms (ctrl current s-name idx)
     `(let* ((,ctrl ,control)
-            (,l-arr ,listeners-array)
             (,s-name ,slot-name)
             (,idx ,index)
             (,current
-             (or (unless (empty-p
-                          (,(control-listeners-name control-type) ,ctrl))
-                   ,l-arr)
-                 (unless (eq (,(control-container-slot-name control-type)
+             (or (unless (eq (,(control-container-slot-name control-type)
                                ,ctrl)
                             :unknown-slot)
                    ,s-name)
@@ -87,8 +96,7 @@
                    ,idx))))
        (assert (null ,current) () "SKITTER: ~a is already used in ~a"
                ,current ,ctrl)
-       (setf (,(control-listeners-name control-type) ,ctrl) ,l-arr
-             (,(control-container-slot-name control-type) ,ctrl) ,s-name
+       (setf (,(control-container-slot-name control-type) ,ctrl) ,s-name
              (,(control-container-index-name control-type) ,ctrl) ,idx))))
 
 ;;----------------------------------------------------------------------

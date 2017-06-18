@@ -8,7 +8,6 @@
   :depends-on (:structy-defclass :rtg-math :alexandria)
   :components ((:file "package")
                ;; internals
-               (:file "hidden")
                (:file "utils")
                (:file "listener")
                (:file "control")

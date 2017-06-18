@@ -19,22 +19,25 @@
   (destructuring-bind (arg . body) control-form
     (destructuring-bind (var-name control-type) arg
       (declare (ignorable control-type))
-      (let* ((this (gensym "THIS")))
-        `(defun ,logic-func-name (,var-name ,this input-source timestamp tpref)
+      (let* ((this (gensym "THIS"))
+             (listener (gensym "LISTENER")))
+        `(defun ,logic-func-name
+             (,var-name ,listener input-source timestamp tpref)
            (declare (ignorable ,var-name tpref timestamp))
-           (labels ((fire (new-val &optional tpref)
-                      (setf (,(control-data-acc-name logi-control-name) ,this)
-                            new-val)
-                      (propagate new-val ,this input-source timestamp tpref)))
-             (symbol-macrolet
-                 (,@(mapcar (lambda (n a) `(,n (,a ,this)))
-                            internal-slot-names
-                            internal-acc-names))
-               (locally
-                   (declare (optimize (speed 1) (debug 1) (space 1)
-                                      (safety 1) (compilation-speed 1)))
-                 ,@body
-                 (values)))))))))
+           (let ((,this (event-listener-subject ,listener)))
+             (labels ((fire (new-val &optional tpref)
+                        (setf (,(control-data-acc-name logi-control-name) ,this)
+                              new-val)
+                        (propagate new-val ,this input-source timestamp tpref)))
+               (symbol-macrolet
+                   (,@(mapcar (lambda (n a) `(,n (,a ,this)))
+                              internal-slot-names
+                              internal-acc-names))
+                 (locally
+                     (declare (optimize (speed 1) (debug 1) (space 1)
+                                        (safety 1) (compilation-speed 1)))
+                   ,@body
+                   (values))))))))))
 
 (defmacro define-logical-control
     ((name &key (type 'boolean) (initform nil)) internal-slots
@@ -49,10 +52,10 @@
 
          ;; control slots
          (control-arg-forms (mapcar #'first control-forms))
-         (control-slot-names (loop :for i :below (length control-arg-forms) :collect
-                                (intern-hidden name "-CONTROL-" i)))
-         (logic-func-names (loop :for name :in control-slot-names :collect
-                              (intern-hidden name "-LOGIC" )))
+         (control-slot-names (loop :for i :below (length control-arg-forms)
+                                :collect (intern-hidden name "-CONTROL-" i)))
+         (logic-func-names (loop :for name :in control-slot-names
+                              :collect (intern-hidden name "-LOGIC" )))
          (control-types (mapcar #'second control-arg-forms))
          (add-arg-names (mapcar #'caar control-forms))
          ;; state-slots
@@ -68,9 +71,9 @@
          (,(control-container-slot-name name) :unknown-slot :type symbol)
          (,(control-container-index-name name) -1 :type fixnum)
          (,(control-listeners-name name)
-           (make-array 0 :element-type 'logical-control :adjustable t
+           (make-array 0 :element-type 'event-listener :adjustable t
                        :fill-pointer 0)
-           :type (array logical-control (*)))
+           :type (array event-listener (*)))
          ;; the internal state for this control. Usable by the user defined
          ;; code, but doesnt get passed anywhere implicitly
          ,@(mapcar (lambda (n s)
@@ -80,27 +83,35 @@
                    internal-acc-names
                    internal-slots)
          ;;
-         ,@(mapcar (lambda (cn ct) `(,cn nil ,ct))
+         ,@(mapcar (lambda (slot-name slot-type arg-name)
+                     `(,slot-name (error ,(format nil "SKITTER: BUG - ~a initialized without ~a"
+                                                  name arg-name))
+                                  :type (or null ,slot-type)))
                    control-slot-names
-                   control-types))
+                   control-types
+                   add-arg-names))
 
-       (defun ,add (source &key ,@add-arg-names)
+       (defun ,add (input-source &key ,@add-arg-names)
          (let ((result (,constructor))
-               ,@(loop :for name :in add-arg-names :collect
-                    `(,name (%get-control source ,name))))
-           ,@(loop :for (arg-name kind) :in control-arg-forms :append
-                `((assert (typep ,arg-name ',kind))
-                  (listen-to result ,arg-name)))
+               ,@(loop :for arg-name :in add-arg-names :append
+                    `((,arg-name (if (listp ,arg-name)
+                                     ,arg-name
+                                     (list ,arg-name))))))
            ,@(loop :for control-slot-name :in control-slot-names
+                :for control-type :in control-types
                 :for arg-name :in add-arg-names
-                :for func :in logic-func-names
-                :collect
-                `(setf (,control-slot-name result)
-                       (%make-event-listener
-                        :subject result
-                        :callback #',func)
-                       ,arg-name))
-           (add-logical-control result)))
+                :for func :in logic-func-names :append
+                `((assert (typep (get-control input-source
+                                              (first ,arg-name)
+                                              (second ,arg-name))
+                                 ',control-type))
+                  (setf (,control-slot-name result)
+                        (listen-to (%make-event-listener
+                                    :callback #',func
+                                    :subject ,arg-name)
+                                   (first ,arg-name)
+                                   (second ,arg-name)))))
+           result))
        ,@(loop :for form :in control-forms :for func-name :in logic-func-names
             :collect (gen-control-logic-func
                       name
@@ -108,25 +119,18 @@
                       internal-acc-names
                       func-name
                       form))
-       (defmethod free-control ((control ,name))
-         ;; remove this logical-control from the things it was listening to
-         ,@(loop :for s :in control-slot-names :collect
-              `(remove-listener listener (,s listener)))
-         ;; remove the logic in case it was a closure an holding onto
-         ;; something
-         (setf (logical-control-logic listener) #'control-is-unregistered
-               ;; remove anything it was listening to
-               (,(control-listeners-name name) listener) nil
-               ;; free all the slots, just in case someone holds onto the
-               ;; logic func for some reason
-               ,@(loop :for s :in control-slot-names :append
-                    `((,s listener) nil))))
+       (defmethod remove-control ((control ,name))
+         ;; remove this logical-control from the things it was listening to and
+         ;; free all the slots, just in case someone holds onto anything
+         ,@(loop :for s :in control-slot-names :append
+              `((stop-listening (,s control))
+                (setf (,s control) nil)))
+         ;;    remove anything it was listening to
+         (setf (,(control-listeners-name name) control)
+               (make-array 0 :element-type 'event-listener :adjustable t
+                           :fill-pointer 0)))
        (defmethod control-listeners ((control ,name))
          (,(control-listeners-name name) control)))))
-
-(defun control-is-unregistered (_ _1 _2)
-  (declare (ignore _ _1 _2))
-  (error "Skitter: This logical-control is not registered to anything"))
 
 ;;----------------------------------------------------------------------
 ;; Messing around
@@ -138,4 +142,4 @@
 
 ;; (define-input-source moose ()
 ;;   (button boolean-state *)
-;;   (dub double-click *))
+;;   (foo boolean-state))
