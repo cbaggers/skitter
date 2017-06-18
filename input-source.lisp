@@ -1,11 +1,14 @@
 (in-package :skitter)
 
-(defgeneric get-control (input-source &optional slot-name index))
 (defgeneric initialize-kind (obj))
+
+(defgeneric get-control
+    (input-source &optional slot-name index allow-arr-result))
 
 (defun isource-array-slot-p (slot)
   (or (string= :* (third slot))
       (numberp (third slot))))
+
 ;;----------------------------------------------------------------------
 
 (defun gen-populate-control (control-type
@@ -164,17 +167,26 @@
        ,@(gen-add-methods name types hidden-slot-names lengths
                            original-slot-names)
 
-       (defmethod get-control ((input-source ,name) &optional slot-name index)
+       (defmethod get-control ((input-source ,name)
+                               &optional slot-name index allow-arr-result)
+         (declare (ignorable allow-arr-result))
          (ecase slot-name
-           ,@(loop :for (cname nil length) :in slots
+           ,@(loop :for (cname type length) :in slots
                 :for slot-name :in hidden-slot-names :collect
                 (let ((kwd (intern (symbol-name cname) :keyword))
-                      (msg (format nil "SKITTER: ~a in ~a is not an array of controls. No index is required"
+                      (msg0 (format nil "SKITTER: ~a in ~a is a array of ~a"
+                                   cname name type))
+                      (msg1 (format nil "SKITTER: ~a in ~a is not an array of controls. No index is required"
                                    cname name)))
                   (if length
-                      `(,kwd (aref (,slot-name input-source) index))
                       `(,kwd
-                        (assert (null index) () ,msg)
+                        (cond
+                          (index (aref (,slot-name input-source) index))
+                          (allow-arr-result (,slot-name input-source))
+                          (t (error ,msg0)))
+                        )
+                      `(,kwd
+                        (assert (null index) () ,msg1)
                         (,slot-name input-source)))))))
 
        (defmethod listen-to ((listener event-listener) (input-source ,name)
