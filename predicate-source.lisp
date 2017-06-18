@@ -11,8 +11,8 @@
 
 (defvar *null-listener*
   (make-null-listener
-   :predicate (lambda (_ _1 _2)
-                (declare (ignore _ _1 _2))
+   :predicate (lambda (_ _1 _2 _3)
+                (declare (ignore _ _1 _2 _3))
                 (error "skitter bug: null listener fired"))))
 
 ;;----------------------------------------------------------------------
@@ -44,11 +44,11 @@
          (control-types (remove-duplicates (mapcar #'second controls)))
          (control-slots (loop :for s :in control-types :collect
                            (symb p name "-" s)))
-         ;;state-slots
+         ;; state-slots
          (original-slot-names (mapcar #'first internal-slots))
          (accessor-names (mapcar (lambda (x) (symb p name "-" x))
                                  original-slot-names))
-         ;;-internal vars
+         ;; internal vars
          (this (gensym "this")))
     (assert (every (lambda (x)
                      (and (listp x)
