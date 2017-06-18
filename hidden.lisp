@@ -18,7 +18,5 @@
                         symbol-name)
                 skitter-hidden))))
 
-
-(defmacro with-hidden (names &body body)
-  `(symbol-macrolet ,(mapcar (lambda (n) `(,n ,(hide n))) names)
-     ,@body))
+(defun intern-hidden (&rest parts)
+  (intern (format nil "~{~a~}" parts) :skitter-hidden))

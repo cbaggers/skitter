@@ -21,13 +21,14 @@
    :boolean-state :make-boolean-state
    :layout :make-layout
    ;; sources
-   :define-input-source :define-control :def-combo-source :defcombo
-   :initialize-kind :add))
+   :define-input-source :define-control :initialize-kind :add))
 
 (uiop:define-package #:skitter
     (:use #:cl #:structy-defclass #:rtg-math #:%rtg-math
           :skitter.internals)
+  (:import-from :alexandria :with-gensyms)
   (:export :make-event-listener :listen-to :stop-listening :whilst-listening-to
+           :define-logical-control :remove-logical-control
            ;;
            :+mice+ :mouse :make-mouse
            :mouse-pos :set-mouse-pos

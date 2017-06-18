@@ -50,3 +50,8 @@
           package))
 
 ;;----------------------------------------------------------------------
+
+(defun empty-p (x)
+  ;; here because import-from alexandria fucked up for some package
+  ;; lock reason
+  (alexandria:emptyp x))

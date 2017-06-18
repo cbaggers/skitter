@@ -1,16 +1,17 @@
 (in-package :skitter)
 
 (defgeneric listen-to (listener input &optional slot-name))
-(defgeneric stop-listening (listener))
-(defgeneric remove-listener (listener input))
 (defgeneric initialize-kind (obj))
+(defgeneric add-logical-control (input-source logicial-control))
+(defgeneric remove-logical-control (input-source logicial-control))
 
 (defun isource-array-slot-p (slot)
   (or (string= :* (third slot))
       (numberp (third slot))))
 ;;----------------------------------------------------------------------
 
-(defun gen-populate-control (hidden-slot-name
+(defun gen-populate-control (control-type
+                             hidden-slot-name
                              listener-slot-name
                              length
                              original-slot-name)
@@ -19,6 +20,7 @@
    the add methods"
   (when (not length)
     `(set-control-slots
+      ,control-type
       (,hidden-slot-name result)
       (,listener-slot-name result)
       ',original-slot-name
@@ -46,7 +48,8 @@
           `(defmethod add ((inst ,name) (control ,type))
              (let ((arr (,hidden-slot-name inst)))
                (,push control arr)
-               (set-control-slots control
+               (set-control-slots ,type
+                                  control
                                   (,listener-slot-name inst)
                                   ',original-slot-name
                                   (position control arr)))))))))
@@ -88,8 +91,11 @@
              (propagate data control input-source timestamp tpref)
              data)))))
 
+(defun intern-logi-hashtable-name (input-source-type-name)
+  (intern-hidden input-source-type-name "-LOGICAL-CONTROLS"))
+
 (defun intern-listener-name (name)
-  (intern (format nil "~s-LISTENERS" name) (symbol-package name)))
+  (symb (symbol-package name) name "-LISTENERS"))
 
 (defun intern-listener-names (names)
   (loop :for n :in names :collect (intern-listener-name n)))
@@ -116,7 +122,7 @@
   (symb (symbol-package type-name) type-name :- user-slot-name))
 
 (defun input-source-hidden-constructor-name (type-name)
-  (intern (format nil "%MAKE-~a" type-name) :skitter-hidden))
+  (intern-hidden "%MAKE-~a" type-name))
 
 (defun input-source-constructor-name (type-name)
   (intern (format nil "MAKE-~a" type-name) (symbol-package type-name)))
@@ -138,16 +144,18 @@
                     (:conc-name nil))
          ,@(mapcar #'parse-input-source-slot hidden-slots)
          ,@(loop :for s :in listener-slot-names :collect
-              `(,s (make-array 0 :element-type 'predicate-control
+              `(,s (make-array 0 :element-type 'event-listener
                                :adjustable t
                                :fill-pointer 0)
-                   :type (array predicate-control (*)))))
+                   :type (array event-listener (*))))
+         (,(intern-logi-hashtable-name name) (make-hash-table :test #'equal)))
 
        ;; public constructor
        (defun ,(input-source-constructor-name name) ()
          (let ((result (,constructor)))
            ,@(denil
               (mapcar #'gen-populate-control
+                      types
                       hidden-slot-names
                       listener-slot-names
                       lengths
@@ -176,12 +184,27 @@
        ,@(gen-add-methods name types hidden-slot-names lengths
                           listener-slot-names original-slot-names)
 
-       (defmethod remove-listener ((listener predicate-control) (input ,name))
+       (defmethod add-logical-control ((input-source ,name)
+                                       logicial-control)
+         (setf (gethash (class-name (class-of logicial-control))
+                        (,(intern-logi-hashtable-name name) input-source))
+               logicial-control))
+
+       (defmethod remove-logical-control ((input-source ,name)
+                                          logical-control-type)
+         (free-control
+          (gethash logical-control-type
+                   (,(intern-logi-hashtable-name name) input-source)))
+         (setf (gethash logical-control-type
+                        (,(intern-logi-hashtable-name name) input-source))
+               nil))
+
+       (defmethod remove-listener ((listener event-listener) (input ,name))
          ,@(loop :for l :in listener-slot-names :collect
               `(shifting-remove (,l input) listener *null-listener*))
          nil)
 
-       (defmethod listen-to ((listener predicate-control) (input ,name)
+       (defmethod listen-to ((listener event-listener) (input ,name)
                              &optional slot-name)
          (let ((arr
                 (ecase slot-name
