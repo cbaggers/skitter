@@ -22,13 +22,15 @@
       (let* ((this (gensym "THIS"))
              (listener (gensym "LISTENER")))
         `(defun ,logic-func-name
-             (,var-name ,listener input-source timestamp tpref)
+             (,var-name ,listener input-source index timestamp tpref)
            (declare (ignorable ,var-name tpref timestamp))
            (let ((,this (event-listener-subject ,listener)))
              (labels ((fire (new-val &optional tpref)
-                        (setf (,(control-data-acc-name logi-control-name) ,this)
+                        (setf (,(control-data-acc-name logi-control-name)
+                                ,this)
                               new-val)
-                        (propagate new-val ,this input-source timestamp tpref)))
+                        (propagate new-val ,this input-source index timestamp
+                                   tpref)))
                (symbol-macrolet
                    (,@(mapcar (lambda (n a) `(,n (,a ,this)))
                               internal-slot-names

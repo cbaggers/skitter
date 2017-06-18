@@ -8,12 +8,12 @@
   (control nil :type t)
   (subject nil :type t)
   (callback (error "skitter: event-listener must be created with a callback")
-            :type (function (t t t t t) t)))
+            :type (function (t t t t t t) t)))
 
 (defun make-event-listener (callback)
-  (labels ((adapter (data listener input-source timestamp tpref)
+  (labels ((adapter (data listener input-source index timestamp tpref)
              (declare (ignore listener))
-             (funcall callback data input-source timestamp tpref)))
+             (funcall callback data input-source index timestamp tpref)))
     (%make-event-listener :callback #'adapter)))
 
 ;;----------------------------------------------------------------------
@@ -54,8 +54,8 @@
 
 (defvar *null-listener*
   (make-event-listener
-   (lambda (_ _1 _2 _3)
-     (declare (ignore _ _1 _2 _3))
+   (lambda (_0 _1 _2 _3 _4)
+     (declare (ignore _0 _1 _2 _3 _4))
      (error "skitter bug: null listener fired"))))
 
 ;;----------------------------------------------------------------------

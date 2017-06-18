@@ -72,10 +72,10 @@
 ;; {TODO} make this control specific as it's the only one using
 ;;        control-listeners.
 ;;        Would also need adding to logical-control
-(defun propagate (data control input-source timestamp tpref)
+(defun propagate (data control input-source index timestamp tpref)
   (loop :for listener :across (control-listeners control) :do
      (funcall (event-listener-callback listener)
-              data listener input-source timestamp tpref)))
+              data listener input-source index timestamp tpref)))
 
 ;;----------------------------------------------------------------------
 
