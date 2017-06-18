@@ -77,15 +77,13 @@
             (+ index 1)
             (,(control-constructor-name control-type)))
            (let* ((control (aref (,(first hidden-slot) input-source)
-                                index))
-                  (index (,(control-data-acc-name control-type) control)))
+                                 index)))
              (setf (,(control-data-acc-name control-type) control)
                    data)
              (propagate data control input-source index timestamp tpref)
              data))
         `(defun ,func-name (input-source timestamp data &optional tpref)
-           (let* ((control (,(first hidden-slot) input-source))
-                  (index (,(control-data-acc-name control-type) control)))
+           (let* ((control (,(first hidden-slot) input-source)))
              (setf (,(control-data-acc-name control-type) control)
                    data)
              (propagate data control input-source index timestamp tpref)
@@ -185,8 +183,7 @@
                         (cond
                           (index (aref (,slot-name input-source) index))
                           (allow-arr-result (,slot-name input-source))
-                          (t (error ,msg0)))
-                        )
+                          (t (error ,msg0))))
                       `(,kwd
                         (assert (null index) () ,msg1)
                         (,slot-name input-source)))))))
@@ -194,9 +191,12 @@
        (defmethod listen-to ((listener event-listener) (input-source ,name)
                              slot-name &optional index)
          (let ((control/s (get-control input-source slot-name index t)))
+           (setf (event-listener-input-source-type listener)
+                 (type-of input-source))
            (if (arrayp control/s)
                (loop :for control :across control/s :do
-                  (listen-to-control control/s listener))
-               (listen-to-control control/s listener)))))))
+                  (listen-to-control control listener))
+               (listen-to-control control/s listener))
+           listener)))))
 
 ;;----------------------------------------------------------------------

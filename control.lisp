@@ -12,7 +12,6 @@
 
 (defgeneric add (inst control))
 (defgeneric control-listeners (control))
-(defgeneric listen-to-control (control listener))
 (defgeneric remove-control (control)
   (:method ((control t)) nil))
 
@@ -63,11 +62,12 @@
 
 ;;----------------------------------------------------------------------
 
-(defmethod listen-to-control (control (listener event-listener))
-  (let ((arr (control-listeners control)))
-    (vector-push-extend listener arr)
-    (setf (event-listener-control listener) control)
-    listener))
+(defgeneric listen-to-control (control listener)
+  (:method (control (listener event-listener))
+    (let ((arr (control-listeners control)))
+      (vector-push-extend listener arr)
+      (push control (event-listener-controls listener))
+      listener)))
 
 ;; {TODO} make this control specific as it's the only one using
 ;;        control-listeners.

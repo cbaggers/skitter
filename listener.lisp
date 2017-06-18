@@ -5,10 +5,18 @@
 ;;----------------------------------------------------------------------
 
 (defstruct (event-listener (:constructor %make-event-listener))
-  (control nil :type t)
+  (input-source-type nil :type t)
+  (controls (list) :type list)
   (subject nil :type t)
   (callback (error "skitter: event-listener must be created with a callback")
             :type (function (t t t t t t) t)))
+
+(defmethod print-object ((el event-listener) stream)
+  (format stream "#<EVENT-LISTENER ~s ~s~a>"
+          (event-listener-input-source-type el)
+          (type-of (first (event-listener-controls el)))
+          (when (rest (event-listener-controls el))
+            "*")))
 
 (defun make-event-listener (callback)
   (labels ((adapter (data listener input-source index timestamp tpref)
@@ -30,7 +38,8 @@
 
 (defun stop-listening (listener)
   (assert (typep listener 'event-listener))
-  (remove-listener listener (event-listener-control listener)))
+  (loop :for control :in (event-listener-controls listener) :do
+     (remove-listener listener control)))
 
 ;;----------------------------------------------------------------------
 
