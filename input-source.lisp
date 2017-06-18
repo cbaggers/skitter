@@ -56,8 +56,8 @@
   (if (isource-array-slot-p hidden-slot)
       `(defun ,original-slot-name (input-source index)
          (ensure-n-long (,(first hidden-slot) input-source)
-                          (+ index 1)
-                          (,(control-constructor-name control-type)))
+                        (+ index 1)
+                        (,(control-constructor-name control-type)))
          (,(control-data-acc-name control-type)
            (aref (,(first hidden-slot) input-source) index)))
       `(defun ,original-slot-name (input-source)
@@ -132,7 +132,7 @@
        ;; Type
        (,def (,name (:constructor ,constructor)
                     (:conc-name nil))
-         ,@(mapcar #'gen-struct-slot-from-input-source-slot hidden-slots))
+           ,@(mapcar #'gen-struct-slot-from-input-source-slot hidden-slots))
 
        ;; public constructor
        (defun ,(input-source-constructor-name name) ()
@@ -165,7 +165,7 @@
                   types))
 
        ,@(gen-add-methods name types hidden-slot-names lengths
-                           original-slot-names)
+                          original-slot-names)
 
        (defmethod get-control ((input-source ,name)
                                &optional slot-name index allow-arr-result)
@@ -175,9 +175,9 @@
                 :for slot-name :in hidden-slot-names :collect
                 (let ((kwd (intern (symbol-name cname) :keyword))
                       (msg0 (format nil "SKITTER: ~a in ~a is a array of ~a"
-                                   cname name type))
+                                    cname name type))
                       (msg1 (format nil "SKITTER: ~a in ~a is not an array of controls. No index is required"
-                                   cname name)))
+                                    cname name)))
                   (if length
                       `(,kwd
                         (cond
@@ -191,7 +191,10 @@
 
        (defmethod listen-to ((listener event-listener) (input-source ,name)
                              slot-name &optional index)
-         (listen-to-control (get-control input-source slot-name index)
-                            listener)))))
+         (let ((control/s (get-control input-source slot-name index t)))
+           (if (arrayp control/s)
+               (loop :for control :across control/s :do
+                  (listen-to-control control/s listener))
+               (listen-to-control control/s listener)))))))
 
 ;;----------------------------------------------------------------------
