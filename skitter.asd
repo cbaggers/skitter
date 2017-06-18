@@ -13,6 +13,6 @@
                (:file "listener")
                (:file "control")
                (:file "input-source")
-               (:file "predicate-source")
+               (:file "logical-control")
                ;; universal controls & sources
                (:file "common")))
