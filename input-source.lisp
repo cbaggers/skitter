@@ -86,7 +86,7 @@
            (let* ((control (,(first hidden-slot) input-source)))
              (setf (,(control-data-acc-name control-type) control)
                    data)
-             (propagate data control input-source index timestamp tpref)
+             (propagate data control input-source -1 timestamp tpref)
              data)))))
 
 (defun gen-struct-slot-from-input-source-slot (s)
