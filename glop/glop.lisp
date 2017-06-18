@@ -167,11 +167,9 @@
 ;; intializing
 
 (defmethod initialize-kind :after ((kind keyboard))
-  (loop for i across *key-button-names* do
-       (identity i)
+  (loop for nil across *key-button-names* do
        (add kind (make-boolean-state))))
 
 (defmethod initialize-kind :after ((kind mouse))
-  (loop for i across *mouse-button-names* do
-       (identity i)
+  (loop for nil across *mouse-button-names* do
        (add kind (make-boolean-state))))

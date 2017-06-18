@@ -52,12 +52,11 @@
                                      control-type)
   (if (isource-array-slot-p hidden-slot)
       `(defun ,original-slot-name (input-source index)
+         (ensure-n-long (,(first hidden-slot) input-source)
+                          (+ index 1)
+                          (,(control-constructor-name control-type)))
          (,(control-data-acc-name control-type)
-           ;; {TODO} I still dont like this being in the aref
-           (aref (ensure-n-long (,(first hidden-slot) input-source)
-                                index
-                                (,(control-constructor-name control-type)))
-                 index)))
+           (aref (,(first hidden-slot) input-source) index)))
       `(defun ,original-slot-name (input-source)
          (,(control-data-acc-name control-type)
            (,(first hidden-slot) input-source)))))
@@ -70,10 +69,11 @@
     (if (isource-array-slot-p hidden-slot)
         `(defun ,func-name (input-source index timestamp data &optional tpref)
            ;; {TODO} I still dont like this being in the aref
-           (let ((control (aref (ensure-n-long
-                                 (,(first hidden-slot) input-source)
-                                 index
-                                 (,(control-constructor-name control-type)))
+           (ensure-n-long
+            (,(first hidden-slot) input-source)
+            (+ index 1)
+            (,(control-constructor-name control-type)))
+           (let ((control (aref (,(first hidden-slot) input-source)
                                 index)))
              (setf (,(control-data-acc-name control-type) control)
                    data)
@@ -179,7 +179,7 @@
 
        (defmethod listen-to ((listener event-listener) (input-source ,name)
                              slot-name &optional index)
-         (listen-to-control (get-control listener input-source slot-name index)
+         (listen-to-control (get-control input-source slot-name index)
                             listener)))))
 
 ;;----------------------------------------------------------------------

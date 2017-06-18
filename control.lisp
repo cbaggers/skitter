@@ -13,7 +13,6 @@
 (defgeneric add (inst control))
 (defgeneric control-listeners (control))
 (defgeneric listen-to-control (control listener))
-(defgeneric remove-listener (listener input))
 (defgeneric remove-control (control)
   (:method ((control t)) nil))
 
@@ -54,11 +53,6 @@
        ;; This exists so people can't set values via the constructor
        (defun ,(control-constructor-name name) ()
          (,constructor))
-       (defmethod listen-to-control ((control ,name) (listener event-listener))
-         (let ((arr (,(control-listeners-name name) control)))
-           (vector-push-extend listener arr)
-           (setf (event-listener-control listener) control)
-           listener))
        (defmethod control-listeners ((control ,name))
          (,(control-listeners-name name) control))
        (defmethod remove-listener ((listener event-listener) (control ,name))
@@ -68,6 +62,12 @@
          nil))))
 
 ;;----------------------------------------------------------------------
+
+(defmethod listen-to-control (control (listener event-listener))
+  (let ((arr (control-listeners control)))
+    (vector-push-extend listener arr)
+    (setf (event-listener-control listener) control)
+    listener))
 
 ;; {TODO} make this control specific as it's the only one using
 ;;        control-listeners.

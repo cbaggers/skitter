@@ -83,13 +83,10 @@
                    internal-acc-names
                    internal-slots)
          ;;
-         ,@(mapcar (lambda (slot-name slot-type arg-name)
-                     `(,slot-name (error ,(format nil "SKITTER: BUG - ~a initialized without ~a"
-                                                  name arg-name))
-                                  :type (or null ,slot-type)))
+         ,@(mapcar (lambda (slot-name slot-type)
+                     `(,slot-name nil :type (or null ,slot-type)))
                    control-slot-names
-                   control-types
-                   add-arg-names))
+                   control-types))
 
        (defun ,add (input-source &key ,@add-arg-names)
          (let ((result (,constructor))
@@ -109,6 +106,7 @@
                         (listen-to (%make-event-listener
                                     :callback #',func
                                     :subject ,arg-name)
+                                   input-source
                                    (first ,arg-name)
                                    (second ,arg-name)))))
            result))
@@ -131,15 +129,3 @@
                            :fill-pointer 0)))
        (defmethod control-listeners ((control ,name))
          (,(control-listeners-name name) control)))))
-
-;;----------------------------------------------------------------------
-;; Messing around
-
-;; (define-logical-control (double-click :type boolean :initform nil)
-;;     ((last-timestamp 0 integer))
-;;   ((button-a boolean-state)
-;;    (setf last-timestamp timestamp)))
-
-;; (define-input-source moose ()
-;;   (button boolean-state *)
-;;   (foo boolean-state))

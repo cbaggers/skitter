@@ -7,17 +7,17 @@
 ;;----------------------------------------------------------------------
 
 (defun make-n-long (array n)
-  (adjust-array array n :fill-pointer (1- n)))
+  (adjust-array array n :fill-pointer n))
 
 (defmacro ensure-n-long (array n &optional init-form)
   (let ((arr (gensym "array"))
-        (index (gensym "n")))
+        (len (gensym "n")))
     `(let ((,arr ,array)
-           (,index ,n))
-       (when (< (length ,arr) ,index)
+           (,len ,n))
+       (when (< (length ,arr) ,len)
          ,(if init-form
-              `(setf (aref (make-n-long ,arr ,index) ,index) ,init-form)
-              `(make-n-long ,arr ,index)))
+              `(setf (aref (make-n-long ,arr ,len) (- ,len 1)) ,init-form)
+              `(make-n-long ,arr ,len)))
        ,arr)))
 
 ;;----------------------------------------------------------------------
