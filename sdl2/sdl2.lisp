@@ -141,7 +141,7 @@
            (win (window 0)))
        (case action
          (:moved (set-window-pos win ts (v!int x y) tpref))
-         (:resized (set-window-size win ts (v!int x y) tpref))
+         (:resized (set-window-size win ts (v!uint x y) tpref))
          (:size-changed (set-window-size win ts (v!uint x y) tpref))
          (:minimized (set-window-layout win ts :minimized tpref))
          (:maximized (set-window-layout win ts :maximized tpref))
