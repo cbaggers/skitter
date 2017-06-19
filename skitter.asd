@@ -9,6 +9,7 @@
   :components ((:file "package")
                ;; internals
                (:file "utils")
+               (:file "frame-id")
                (:file "listener")
                (:file "control")
                (:file "input-source")

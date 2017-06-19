@@ -6,9 +6,12 @@
 (define-control iposition2 (:static t) rtg-math.types:ivec2 (v!int 0 0))
 (define-control uposition2 (:static t) rtg-math.types:uvec2 (v!uint 0 0))
 
-(define-control relative2 (:static t) rtg-math.types:vec2 (v! 0 0))
-(define-control irelative2 (:static t) rtg-math.types:vec2 (v! 0 0))
-(define-control urelative2 (:static t) rtg-math.types:vec2 (v! 0 0))
+(define-control relative2 (:static t) rtg-math.types:vec2 (v! 0 0)
+                :decays t)
+(define-control irelative2 (:static t) rtg-math.types:vec2 (v! 0 0)
+                :decays t)
+(define-control urelative2 (:static t) rtg-math.types:vec2 (v! 0 0)
+                :decays t)
 
 (define-control size2 (:static t) rtg-math.types:vec2 (v! 0 0))
 (define-control isize2 (:static t) rtg-math.types:ivec2 (v!int 0 0))

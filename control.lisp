@@ -21,10 +21,13 @@
   (intern-hidden "%MAKE-" control-type))
 
 (defun control-constructor-name (control-type)
-  (symb (symbol-package control-type) "MAKE-" control-type))
+  (symb (package-name (symbol-package control-type)) "MAKE-" control-type))
 
 (defun control-data-acc-name (control-type)
-  (symb (symbol-package control-type) control-type "-DATA"))
+  (symb (package-name (symbol-package control-type)) control-type "-DATA"))
+
+(defun control-hidden-data-name (control-type)
+  (hide (control-data-acc-name control-type)))
 
 (defun control-container-slot-name (control-type)
   (intern-hidden control-type "-CONTAINER-SLOT"))
@@ -35,13 +38,21 @@
 (defun control-listeners-name (control-type)
   (intern-hidden control-type "-LISTENERS"))
 
-(defmacro define-control (name (&key static) type init-val)
+(defun control-decay-name (control-type)
+  (intern-hidden (package-name (symbol-package control-type)) "-" control-type "-DECAYS-P"))
+
+(defun control-last-frame-name (control-type)
+  (intern-hidden (package-name (symbol-package control-type)) "-" control-type "-LAST-FRAME"))
+
+(defmacro define-control (name (&key static) type init-val &key decays)
   (let* ((constructor (control-hidden-constructor-name name))
          (def (if static 'defstruct 'deftclass)))
     `(progn
        (,def (,name (:conc-name nil)
                     (:constructor ,constructor))
-           (,(control-data-acc-name name) ,init-val :type ,type)
+           (,(control-decay-name name) ,decays :type boolean)
+         (,(control-last-frame-name name) 0 :type (unsigned-byte 16))
+         (,(control-hidden-data-name name) ,init-val :type ,type)
          (,(control-container-slot-name name) :unknown-slot :type symbol)
          (,(control-container-index-name name) -1 :type fixnum)
          (,(control-listeners-name name)
@@ -52,6 +63,33 @@
        ;; This exists so people can't set values via the constructor
        (defun ,(control-constructor-name name) ()
          (,constructor))
+       ;; set & get the data
+       (declaim (type (function (,name (unsigned-byte 16)) ,type)
+                      ,(control-data-acc-name name))
+                (inline ,(control-data-acc-name name)))
+       (defun ,(control-data-acc-name name) (control)
+         (declare (optimize (speed 3) (safety 1) (debug 0))
+                  (inline frame-id ,(control-decay-name name)
+                          ,(control-last-frame-name name)
+                          ,(control-hidden-data-name name))
+                  (type ,name control))
+         (let ((frame-id (frame-id)))
+           (if (and (,(control-decay-name name) control)
+                    (/= (,(control-last-frame-name name) control) frame-id))
+               (progn
+                 (setf (,(control-last-frame-name name) control) frame-id)
+                 (setf (,(control-hidden-data-name name) control) ,init-val))
+               (,(control-hidden-data-name name) control))))
+       (defun (setf ,(control-data-acc-name name)) (value control)
+         (declare (optimize (speed 3) (safety 1) (debug 0))
+                  (inline frame-id ,(control-last-frame-name name)
+                          ,(control-hidden-data-name name))
+                  (type ,name control)
+                  (type ,type value))
+         (let ((frame-id (frame-id)))
+           (setf (,(control-last-frame-name name) control) frame-id)
+           (setf (,(control-hidden-data-name name) control) value)))
+       ;;
        (defmethod control-listeners ((control ,name))
          (,(control-listeners-name name) control))
        (defmethod remove-listener ((listener event-listener) (control ,name))

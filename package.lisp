@@ -49,4 +49,6 @@
            :window-layout :set-window-layout
            ;;
            :key-down-p :key-id
-           :mouse-down-p :mouse-button-id))
+           :mouse-down-p :mouse-button-id
+           ;;
+           :next-skitter-frame))
