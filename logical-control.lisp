@@ -42,7 +42,7 @@
                    (values))))))))))
 
 (defmacro define-logical-control
-    ((name &key (type 'boolean) (initform nil)) internal-slots
+    ((name &key (type 'boolean) (initform nil) decays) internal-slots
      &body control-forms)
   (assert control-forms () "SKITTER: ~a must have at least one control form"
           name)
@@ -68,7 +68,10 @@
        (deftclass (,name (:conc-name nil)
                          (:constructor ,constructor))
          ;; the state for this control
-         (,(control-data-acc-name name) ,initform :type ,type)
+         (,(control-hidden-data-name name) ,initform :type ,type)
+         ;; state decay logic
+         (,(control-decay-name name) ,decays :type boolean)
+         (,(control-last-frame-name name) 0 :type (unsigned-byte 16))
          ;; the details for things listening to this control
          (,(control-container-slot-name name) :unknown-slot :type symbol)
          (,(control-container-index-name name) -1 :type fixnum)
@@ -89,6 +92,33 @@
                      `(,slot-name nil :type (or null ,slot-type)))
                    control-slot-names
                    control-types))
+       ;; set & get the for the data
+       (declaim (type (function (,name (unsigned-byte 16)) ,type)
+                      ,(control-data-acc-name name))
+                (inline ,(control-data-acc-name name)))
+       (defun ,(control-data-acc-name name) (control)
+         (declare (optimize (speed 3) (safety 1) (debug 0))
+                  (inline frame-id ,(control-decay-name name)
+                          ,(control-last-frame-name name)
+                          ,(control-hidden-data-name name))
+                  (type ,name control))
+         (let ((frame-id (frame-id)))
+           (if (and (,(control-decay-name name) control)
+                    (/= (the (unsigned-byte 16) (,(control-last-frame-name name) control))
+                        frame-id))
+               (progn
+                 (setf (,(control-last-frame-name name) control) frame-id)
+                 (setf (,(control-hidden-data-name name) control) ,initform))
+               (,(control-hidden-data-name name) control))))
+       (defun (setf ,(control-data-acc-name name)) (value control)
+         (declare (optimize (speed 3) (safety 1) (debug 0))
+                  (inline frame-id ,(control-last-frame-name name)
+                          ,(control-hidden-data-name name))
+                  (type ,name control)
+                  (type ,type value))
+         (let ((frame-id (frame-id)))
+           (setf (,(control-last-frame-name name) control) frame-id)
+           (setf (,(control-hidden-data-name name) control) value)))
 
        (defun ,add (input-source &key ,@add-arg-names)
          (let ((result (,constructor))
@@ -131,3 +161,11 @@
                            :fill-pointer 0)))
        (defmethod control-listeners ((control ,name))
          (,(control-listeners-name name) control)))))
+
+
+;; (define-logical-control (double-click :decays t)
+;;     ((last-press nil integer))
+;;   ((button boolean-state)
+;;    (when (< (- timestamp last-press) 10)
+;;      (fire t))
+;;    (setf last-press timestamp)))
