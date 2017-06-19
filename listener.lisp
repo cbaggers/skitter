@@ -15,8 +15,9 @@
   (format stream "#<EVENT-LISTENER ~s ~s~a>"
           (event-listener-input-source-type el)
           (type-of (first (event-listener-controls el)))
-          (when (rest (event-listener-controls el))
-            "*")))
+          (if (rest (event-listener-controls el))
+              "*"
+              "")))
 
 (defun make-event-listener (callback)
   (labels ((adapter (data listener input-source index timestamp tpref)
