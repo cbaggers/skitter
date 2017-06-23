@@ -128,6 +128,10 @@
           :into results
           :finally (return (remove nil results)))))
 
+;; 2d axis can go down to -32768 but 1d axis can only go up to 32767
+(defconstant +axis-norm-factor-2d+ #.(/ 1f0 32768))
+(defconstant +axis-norm-factor-1d+ #.(/ 1f0 32767))
+
 (defun on-event (event &optional tpref)
   (%case-event (event)
     (:quit
@@ -183,23 +187,29 @@
            (gpad (gamepad id)))
        (cond
          ((= axis sdl2-ffi:+sdl-controller-axis-leftx+)
-          (let ((curr (gamepad-2d gpad 0)))
-            (set-gamepad-2d gpad 0 ts (v! value (y curr)) tpref)))
+          (let ((curr (gamepad-2d gpad 0))
+                (val (* (float value 0f0) +axis-norm-factor-2d+)))
+            (set-gamepad-2d gpad 0 ts (v2:make val (y curr)) tpref)))
          ((= axis sdl2-ffi:+sdl-controller-axis-lefty+)
-          (let ((curr (gamepad-2d gpad 0)))
-            (set-gamepad-2d gpad 0 ts (v! (x curr) (- value)) tpref)))
+          (let ((curr (gamepad-2d gpad 0))
+                (val (* (float value 0f0) +axis-norm-factor-2d+)))
+            (set-gamepad-2d gpad 0 ts (v2:make (x curr) (- val)) tpref)))
 
          ((= axis sdl2-ffi:+sdl-controller-axis-rightx+)
-          (let ((curr (gamepad-2d gpad 0)))
-            (set-gamepad-2d gpad 1 ts (v! value (y curr)) tpref)))
+          (let ((curr (gamepad-2d gpad 0))
+                (val (* (float value 0f0) +axis-norm-factor-2d+)))
+            (set-gamepad-2d gpad 1 ts (v2:make val (y curr)) tpref)))
          ((= axis sdl2-ffi:+sdl-controller-axis-righty+)
-          (let ((curr (gamepad-2d gpad 0)))
-            (set-gamepad-2d gpad 1 ts (v! (x curr) (- value)) tpref)))
+          (let ((curr (gamepad-2d gpad 0))
+                (val (* (float value 0f0) +axis-norm-factor-2d+)))
+            (set-gamepad-2d gpad 1 ts (v2:make (x curr) (- val)) tpref)))
 
          ((= axis sdl2-ffi:+sdl-controller-axis-triggerleft+)
-          (set-gamepad-1d gpad 0 ts (float value 0f0) tpref))
+          (let ((val (* (float value 0f0) +axis-norm-factor-1d+)))
+            (set-gamepad-1d gpad 0 ts val tpref)))
          ((= axis sdl2-ffi:+sdl-controller-axis-triggerright+)
-          (set-gamepad-1d gpad 1 ts (float value 0f0) tpref))
+          (let ((val (* (float value 0f0) +axis-norm-factor-1d+)))
+            (set-gamepad-1d gpad 1 ts val tpref)))
          ;; ((= axis sdl2-ffi:+sdl-controller-axis-max+))
          ;; ((= axis sdl2-ffi:+sdl-controller-axis-invalid+))
          )))
