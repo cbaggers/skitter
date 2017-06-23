@@ -42,7 +42,7 @@
   (pos ivec2-control)
   (size uvec2-control)
   (closing boolean-control)
-  (symbol-control symbol-control))
+  (layout symbol-control))
 
 ;;----------------------------------------------------------------------
 
