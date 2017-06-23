@@ -24,7 +24,7 @@
 (define-input-source mouse (:static t)
   (pos vec2-control)
   (move vec2-decaying-control)
-  (float-control vec2-control)
+  (wheel vec2-control)
   (button boolean-control *))
 
 (define-input-source gamepad ()
