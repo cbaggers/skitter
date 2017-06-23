@@ -27,9 +27,9 @@
   (wheel vec2-control)
   (button boolean-control *))
 
-(define-input-source gamepad ()
+(define-input-source gamepad (:static t)
   (button boolean-control *)
-  (1d vec2-control *)
+  (1d float-control *)
   (2d vec2-control *))
 
 (define-input-source keyboard (:static t)
@@ -50,7 +50,6 @@
 (defvar +window-manager+ (make-window-manager))
 
 ;;----------------------------------------------------------------------
-
 
 (defvar +keyboards+ (make-array 1 :element-type '(or keyboard null)
                                 :adjustable t :fill-pointer 0))
@@ -78,6 +77,17 @@
 
 (defun mouse-down-p (index &optional (mouse (mouse 0)))
   (mouse-button mouse index))
+
+;;----------------------------------------------------------------------
+
+(defvar +gamepads+ (make-array 1 :element-type '(or gamepad null)
+                               :adjustable t :fill-pointer 0))
+
+(defun gamepad (&optional (n 0))
+  (when (> (1+ n) (length +gamepads+))
+    (adjust-array +gamepads+ (1+ n) :fill-pointer (1+ n) :initial-element nil)
+    (setf (aref +gamepads+ n) (make-gamepad)))
+  (aref +gamepads+ n))
 
 ;;----------------------------------------------------------------------
 

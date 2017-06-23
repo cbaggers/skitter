@@ -36,6 +36,11 @@
            :mouse-button :set-mouse-button
            :mouse-wheel :set-mouse-wheel
 
+           :+gamepads+ :gamepad :make-gamepad
+           :gamepad-button :set-gamepad-button
+           :gamepad-1d :set-gamepad-1d
+           :gamepad-2d :set-gamepad-2d
+
            :+keyboard+ :keyboard :make-keyboard
            :keyboard-button :set-keyboard-button
 

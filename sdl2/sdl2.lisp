@@ -176,7 +176,46 @@
         (plus-c:c-ref keysym sdl2-ffi:sdl-keysym :scancode)
         (sdl->lisp-time ts)
         (= 1 s)
-        tpref)))))
+        tpref)))
+    ((:controlleraxismotion)
+     (:timestamp ts :which id :axis axis :value value)
+     (let ((ts (sdl->lisp-time ts))
+           (gpad (gamepad id)))
+       (cond
+         ((= axis sdl2-ffi:+sdl-controller-axis-leftx+)
+          (let ((curr (gamepad-2d gpad 0)))
+            (set-gamepad-2d gpad 0 ts (v! value (y curr)) tpref)))
+         ((= axis sdl2-ffi:+sdl-controller-axis-lefty+)
+          (let ((curr (gamepad-2d gpad 0)))
+            (set-gamepad-2d gpad 0 ts (v! (x curr) (- value)) tpref)))
+
+         ((= axis sdl2-ffi:+sdl-controller-axis-rightx+)
+          (let ((curr (gamepad-2d gpad 0)))
+            (set-gamepad-2d gpad 1 ts (v! value (y curr)) tpref)))
+         ((= axis sdl2-ffi:+sdl-controller-axis-righty+)
+          (let ((curr (gamepad-2d gpad 0)))
+            (set-gamepad-2d gpad 1 ts (v! (x curr) (- value)) tpref)))
+
+         ((= axis sdl2-ffi:+sdl-controller-axis-triggerleft+)
+          (set-gamepad-1d gpad 0 ts (float value 0f0) tpref))
+         ((= axis sdl2-ffi:+sdl-controller-axis-triggerright+)
+          (set-gamepad-1d gpad 1 ts (float value 0f0) tpref))
+         ;; ((= axis sdl2-ffi:+sdl-controller-axis-max+))
+         ;; ((= axis sdl2-ffi:+sdl-controller-axis-invalid+))
+         )))
+    ((:controllerbuttondown
+      :controllerbuttonup)
+     (:timestamp ts :which id :button b :state s)
+     (let ((ts (sdl->lisp-time ts))
+           (gpad (gamepad id))
+           (downp (= s sdl2-ffi:+sdl-pressed+)))
+       (set-gamepad-button gpad b ts downp tpref)))
+    ;; ((:controllerdeviceadded
+    ;;   :controllerdeviceremoved
+    ;;   :controllerdeviceremapped)
+    ;;  ()
+    ;;  (print (SDL2:GET-EVENT-TYPE EVENT)))
+    ))
 
 (defun collect-sdl-events (win &optional tpref)
   (declare (ignore win))
@@ -195,3 +234,14 @@
 (defmethod initialize-kind :after ((kind mouse))
   (loop for nil across *mouse-button-names* do
        (add kind (make-boolean-control))))
+
+(defmethod initialize-kind :after ((pad gamepad))
+  ;; add two 2d axis controls
+  (add pad (make-vec2-control))
+  (add pad (make-vec2-control))
+  ;; add two 1d axis controls
+  (add pad (make-float-control))
+  (add pad (make-float-control))
+  ;; 17 is the number of button kinds there are
+  (loop :for i :below 17 :do
+     (add pad (make-boolean-control))))
