@@ -9,9 +9,9 @@
   (declare (optimize (speed 3) (safety 1) (debug 0)))
   *frame-id*)
 
-(declaim (type (function () (values)) next-skitter-frame)
-         (inline next-skitter-frame))
-(defun next-skitter-frame ()
+(declaim (type (function () (values)) decay-events)
+         (inline decay-events))
+(defun decay-events ()
   (declare (optimize (speed 3) (safety 1) (debug 0))
            (inline mod expt values))
   (setf *frame-id* (mod (+ *frame-id* 1) #.(expt 2 16)))

@@ -51,4 +51,4 @@
            :key-down-p :key-id
            :mouse-down-p :mouse-button-id
            ;;
-           :next-skitter-frame))
+           :decay-events))
