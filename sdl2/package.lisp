@@ -2,7 +2,7 @@
 
 (uiop:define-package #:skitter.sdl2
     (:use #:cl #:skitter #:rtg-math #:skitter.internals)
-  (:export :collect-sdl-events))
+  (:export :collect-sdl-events :enable-background-joystick-events))
 
 (defpackage #:skitter.sdl2.keys
   (:use #:cl)

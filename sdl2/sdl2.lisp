@@ -245,3 +245,11 @@
   ;; 17 is the number of button kinds there are
   (loop :for i :below 17 :do
      (add pad (make-boolean-control))))
+
+;;----------------------------------------------------------------------
+
+(defun enable-background-joystick-events ()
+  (cffi:with-foreign-string (on "1")
+    (sdl2-ffi.functions:sdl-set-hint
+     sdl2-ffi:+sdl-hint-joystick-allow-background-events+
+     on)))
