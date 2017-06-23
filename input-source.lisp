@@ -134,6 +134,9 @@
                     (:conc-name nil))
            ,@(mapcar #'gen-struct-slot-from-input-source-slot hidden-slots))
 
+       (defmethod print-object ((obj ,name) stream)
+         (print-unreadable-object (obj stream :type t :identity t)))
+
        ;; public constructor
        (defun ,(input-source-constructor-name name) ()
          (let ((result (,constructor)))
