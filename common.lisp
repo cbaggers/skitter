@@ -21,7 +21,7 @@
 
 ;;----------------------------------------------------------------------
 
-(define-input-source mouse ()
+(define-input-source mouse (:static t)
   (pos vec2-control)
   (move vec2-decaying-control)
   (float-control vec2-control)
@@ -32,13 +32,13 @@
   (1d vec2-control *)
   (2d vec2-control *))
 
-(define-input-source keyboard ()
+(define-input-source keyboard (:static t)
   (button boolean-control *))
 
-(define-input-source window-manager ()
+(define-input-source window-manager (:static t)
   (quitting boolean-control))
 
-(define-input-source window ()
+(define-input-source window (:static t)
   (pos ivec2-control)
   (size uvec2-control)
   (closing boolean-control)
