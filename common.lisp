@@ -2,47 +2,47 @@
 
 ;;----------------------------------------------------------------------
 
-(define-control position2 (:static t) rtg-math.types:vec2 (v! 0 0))
-(define-control iposition2 (:static t) rtg-math.types:ivec2 (v!int 0 0))
-(define-control uposition2 (:static t) rtg-math.types:uvec2 (v!uint 0 0))
+(define-control boolean-control (:static t) boolean nil)
+(define-control symbol-control (:static t) symbol :unknown)
 
-(define-control relative2 (:static t) rtg-math.types:vec2 (v! 0 0)
+(define-control float-control (:static t) single-float 0f0)
+(define-control vec2-control (:static t) rtg-math.types:vec2 (v! 0 0))
+(define-control ivec2-control (:static t) rtg-math.types:ivec2 (v!int 0 0))
+(define-control uvec2-control (:static t) rtg-math.types:uvec2 (v!uint 0 0))
+
+(define-control float-decaying-control (:static t) single-float 0f0
                 :decays t)
-(define-control irelative2 (:static t) rtg-math.types:vec2 (v! 0 0)
+(define-control vec2-decaying-control (:static t) rtg-math.types:vec2 (v! 0 0)
                 :decays t)
-(define-control urelative2 (:static t) rtg-math.types:vec2 (v! 0 0)
+(define-control ivec2-decaying-control (:static t) rtg-math.types:vec2 (v! 0 0)
                 :decays t)
-
-(define-control size2 (:static t) rtg-math.types:vec2 (v! 0 0))
-(define-control isize2 (:static t) rtg-math.types:ivec2 (v!int 0 0))
-(define-control usize2 (:static t) rtg-math.types:uvec2 (v!uint 0 0))
-
-(define-control wheel (:static t) single-float 0f0)
-(define-control wheel2 (:static t) rtg-math.types:vec2 (v! 0 0))
-
-(define-control boolean-state (:static t) boolean nil)
-
-(define-control layout (:static t) symbol :unknown)
+(define-control uvec2-decaying-control (:static t) rtg-math.types:vec2 (v! 0 0)
+                :decays t)
 
 ;;----------------------------------------------------------------------
 
 (define-input-source mouse ()
-  (pos position2)
-  (move relative2)
-  (wheel wheel2)
-  (button boolean-state *))
+  (pos vec2-control)
+  (move vec2-decaying-control)
+  (float-control vec2-control)
+  (button boolean-control *))
+
+(define-input-source gamepad ()
+  (button boolean-control *)
+  (1d vec2-control *)
+  (2d vec2-control *))
 
 (define-input-source keyboard ()
-  (button boolean-state *))
+  (button boolean-control *))
 
 (define-input-source window-manager ()
-  (quitting boolean-state))
+  (quitting boolean-control))
 
 (define-input-source window ()
-  (pos iposition2)
-  (size usize2)
-  (closing boolean-state)
-  (layout layout))
+  (pos ivec2-control)
+  (size uvec2-control)
+  (closing boolean-control)
+  (symbol-control symbol-control))
 
 ;;----------------------------------------------------------------------
 

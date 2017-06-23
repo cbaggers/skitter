@@ -7,19 +7,19 @@
     (:use #:cl #:structy-defclass #:rtg-math #:%rtg-math)
   (:export
    ;; controls
-   :position2 :make-position2
-   :iposition2 :make-iposition2
-   :uposition2 :make-uposition2
-   :relative2 :make-relative2
-   :irelative2 :make-irelative2
-   :urelative2 :make-urelative2
-   :size2 :make-size2
-   :isize2 :make-isize2
-   :usize2 :make-usize2
-   :wheel :make-wheel
-   :wheel2 :make-wheel2
-   :boolean-state :make-boolean-state
-   :layout :make-layout
+   :boolean-control :make-boolean-control
+   :symbol-control :make-symbol-control
+
+   :float-control :make-float-control
+   :vec2-control :make-vec2-control
+   :ivec2-control :make-ivec2-control
+   :uvec2-control :make-uvec2-control
+
+   :float-decaying-control :make-float-decaying-control
+   :vec2-decaying-control :make-vec2-decaying-control
+   :ivec2-decaying-control :make-ivec2-decaying-control
+   :uvec2-decaying-control :make-uvec2-decaying-control
+
    ;; sources
    :define-input-source :define-control :initialize-kind :add))
 

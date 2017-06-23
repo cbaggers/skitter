@@ -165,7 +165,7 @@
 
 ;; (define-logical-control (double-click :decays t)
 ;;     ((last-press nil integer))
-;;   ((button boolean-state)
+;;   ((button boolean-control)
 ;;    (when (< (- timestamp last-press) 10)
 ;;      (fire t))
 ;;    (setf last-press timestamp)))

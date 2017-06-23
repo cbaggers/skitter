@@ -168,8 +168,8 @@
 
 (defmethod initialize-kind :after ((kind keyboard))
   (loop for nil across *key-button-names* do
-       (add kind (make-boolean-state))))
+       (add kind (make-boolean-control))))
 
 (defmethod initialize-kind :after ((kind mouse))
   (loop for nil across *mouse-button-names* do
-       (add kind (make-boolean-state))))
+       (add kind (make-boolean-control))))
