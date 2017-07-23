@@ -12,12 +12,12 @@
 
 (define-control float-decaying-control (:static t) single-float 0f0
                 :decays t)
-(define-control vec2-decaying-control (:static t) rtg-math.types:vec2 (v! 0 0)
-                :decays t)
-(define-control ivec2-decaying-control (:static t) rtg-math.types:vec2 (v! 0 0)
-                :decays t)
-(define-control uvec2-decaying-control (:static t) rtg-math.types:vec2 (v! 0 0)
-                :decays t)
+(define-control vec2-decaying-control (:static t) rtg-math.types:vec2
+                (v! 0 0) :decays t)
+(define-control ivec2-decaying-control (:static t) rtg-math.types:ivec2
+                (v!int 0 0) :decays t)
+(define-control uvec2-decaying-control (:static t) rtg-math.types:uvec2
+                (v!uint 0 0) :decays t)
 
 ;;----------------------------------------------------------------------
 
