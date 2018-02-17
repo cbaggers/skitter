@@ -4,7 +4,7 @@
   (:use #:cl))
 
 (uiop:define-package #:skitter.internals
-    (:use #:cl #:structy-defclass #:rtg-math #:%rtg-math)
+    (:use #:cl #:structy-defclass #:rtg-math)
   (:export
    ;; controls
    :boolean-control :make-boolean-control
@@ -24,8 +24,7 @@
    :define-input-source :define-control :initialize-kind :add))
 
 (uiop:define-package #:skitter
-    (:use #:cl #:structy-defclass #:rtg-math #:%rtg-math
-          :skitter.internals)
+    (:use #:cl #:structy-defclass #:rtg-math :skitter.internals)
   (:import-from :alexandria :with-gensyms)
   (:export :make-event-listener :listen-to :stop-listening :whilst-listening-to
            :define-logical-control :remove-control
