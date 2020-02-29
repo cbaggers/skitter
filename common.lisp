@@ -66,14 +66,12 @@
 ;;----------------------------------------------------------------------
 
 
-(defvar +mice+ (make-array 1 :element-type '(or null mouse)
-                           :adjustable t :fill-pointer 0))
+(defvar +mice+ (make-hash-table :size 1))
 
 (defun mouse (&optional (n 0))
-  (when (> (1+ n) (length +mice+))
-    (adjust-array +mice+ (1+ n) :fill-pointer (1+ n) :initial-element nil)
-    (setf (aref +mice+ n) (make-mouse)))
-  (aref +mice+ n))
+  (unless (gethash n +mice+)
+    (setf (gethash n +mice+) (make-mouse)))
+  (gethash n +mice+))
 
 (defun mouse-down-p (index &optional (mouse (mouse 0)))
   (mouse-button mouse index))
